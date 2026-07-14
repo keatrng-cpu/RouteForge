@@ -267,18 +267,36 @@ async function loadPhotos(){
     paintPhoto(st);
   }
 }
+// Only trust a Wikipedia photo when the matched PAGE TITLE is genuinely the
+// place — otherwise the search returns a wrong page's lead image (a cafe → a
+// senator). Deterministic token matching, never the model.
+const PHOTO_STOP=new Set(("the a an of and or on at in near cafe café restaurant restaurants grill grille bar pub tavern saloon pizza pizzeria co inc llc ltd company hotel motel lodge inn resort spa park state national campground campgrounds rv diner kitchen house natural foods food coffee brewery brewing bakery deli grocery market shop store eatery bistro trail trails overlook point tours tour").split(" "));
+function pTokens(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(Boolean); }
+function pDistinct(name){ return pTokens(name).filter(t=>t.length>=3 && !PHOTO_STOP.has(t)); }
+function titleRelevant(name,title){
+  const d=pDistinct(name); if(!d.length) return false;
+  const tt=pTokens(title);
+  const has=t=>tt.some(x=>x===t||(x.startsWith(t)&&x.length-t.length<=3)||(t.startsWith(x)&&t.length-x.length<=3));
+  const matched=d.filter(has);
+  if(!matched.length) return false;
+  return matched.some(t=>t.length>=4) || matched.length>=2;
+}
 async function wikiPhoto(name,area){
   const q=[name,area].filter(Boolean).join(" ");
   const url="https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*"
-    +"&generator=search&gsrsearch="+encodeURIComponent(q)+"&gsrlimit=1"
+    +"&generator=search&gsrsearch="+encodeURIComponent(q)+"&gsrlimit=4"
     +"&prop=pageimages|info&inprop=url&piprop=thumbnail&pithumbsize=640";
   try{
     const r=await fetch(url); if(!r.ok) return null;
     const j=await r.json();
     const pages=j&&j.query&&j.query.pages; if(!pages) return null;
-    const p=Object.values(pages)[0];
-    if(!p||!p.thumbnail||!p.thumbnail.source) return null;
-    return {src:p.thumbnail.source, page:p.fullurl||null, title:p.title||q};
+    const list=Object.values(pages).sort((a,b)=>(a.index||0)-(b.index||0));
+    for(const p of list){
+      if(p&&p.thumbnail&&p.thumbnail.source&&titleRelevant(name,p.title||"")){
+        return {src:p.thumbnail.source, page:p.fullurl||null, title:p.title||q};
+      }
+    }
+    return null;
   }catch(e){ return null; }
 }
 function paintPhoto(st){

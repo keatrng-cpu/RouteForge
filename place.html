@@ -91,6 +91,9 @@
   .pk-photo img.in{opacity:1}
   .pk-photo .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:26px}
   .pk-photo .ph small{font-family:var(--mono);font-size:8px;letter-spacing:.12em;color:var(--seam);text-transform:uppercase;text-align:center;padding:0 8px;line-height:1.5}
+  .pk-photo a.phlink{text-decoration:none;color:inherit;cursor:pointer}
+  .pk-photo a.phlink small{color:var(--molten)}
+  .pk-photo a.phlink:hover{background:rgba(255,122,41,.06)}
   .pk-body{padding:12px 13px 12px}
   .pk-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
   .pk-name{font-size:15px;font-weight:750;letter-spacing:-.01em}
@@ -287,8 +290,32 @@ function quickLinks(){
   addEventListener("scroll",move,{passive:true}); addEventListener("resize",move); move();
 })();
 
+/* ---------- photo relevance ----------
+   Wikipedia's image search returns the lead photo of whatever page ranks
+   first for the text — which for a small business is usually a wildly wrong
+   page (a cafe → a senator, a pizzeria → a state flag). We only trust a
+   photo when the matched Wikipedia PAGE TITLE genuinely corresponds to the
+   place. Deterministic string matching, never the model. */
+const PHOTO_STOP=new Set(("the a an of and or on at in near cafe café restaurant restaurants grill grille bar pub tavern saloon pizza pizzeria co inc llc ltd company hotel motel lodge inn resort spa park state national campground campgrounds rv diner kitchen house natural foods food coffee brewery brewing bakery deli grocery market shop store eatery bistro trail trails overlook point tours tour").split(" "));
+function pTokens(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(Boolean); }
+function pDistinct(name){ return pTokens(name).filter(t=>t.length>=3 && !PHOTO_STOP.has(t)); }
+function titleRelevant(name,title,strict){
+  const d=pDistinct(name); if(!d.length) return false;
+  const tt=pTokens(title);
+  const has=t=>tt.some(x=>x===t||(x.startsWith(t)&&x.length-t.length<=3)||(t.startsWith(x)&&t.length-x.length<=3));
+  const matched=d.filter(has);
+  if(!matched.length) return false;
+  if(strict){
+    const need=d.length<=1?1:Math.max(2,Math.ceil(d.length*0.6));
+    if(matched.length<need) return false;
+    if(d.length===1 && d[0].length<5) return false;
+    return true;
+  }
+  return matched.some(t=>t.length>=4) || matched.length>=2;
+}
+
 /* ---------- wikimedia ---------- */
-async function wikiImages(q,limit,size){
+async function wikiImages(q,limit,size,matchName,strict){
   const url="https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*"
     +"&generator=search&gsrsearch="+encodeURIComponent(q)+"&gsrlimit="+(limit||6)
     +"&prop=pageimages|info&inprop=url&piprop=thumbnail&pithumbsize="+(size||800);
@@ -303,27 +330,30 @@ async function wikiImages(q,limit,size){
         out.push({src:p.thumbnail.source,page:p.fullurl||null,title:p.title||q});
       }
     });
-    return out;
+    return matchName ? out.filter(o=>titleRelevant(matchName,o.title,strict)) : out;
   }catch(e){ return []; }
 }
+const seePhotos=(name,area)=>mapsSearch(name+(area?" "+area:""));
 
 /* ---------- hero + gallery ---------- */
 (async function(){
-  const shots=await wikiImages(WHERE,8,1000);
+  const shots=await wikiImages(WHERE,10,1000,NAME,false);
   if(shots.length){
     const hero=shots[0];
     const img=$("heroImg");
     img.src=hero.src; img.alt=NAME;
     img.onload=()=>img.classList.add("in");
     $("heroCredit").innerHTML='PHOTO: WIKIMEDIA · <a href="'+esc(hero.page||"#")+'" target="_blank" rel="noopener">'+esc(hero.title)+'</a>';
+  }else{
+    // No verified encyclopedic photo — never show a wrong one; link to real photos.
+    $("heroCredit").innerHTML='<a href="'+esc(seePhotos(NAME,AREA))+'" target="_blank" rel="noopener">SEE REAL PHOTOS OF '+esc(NAME.toUpperCase())+' ↗</a>';
   }
   const strip=shots.slice(1);
-  if(!strip.length&&!shots.length){
-    $("gallery").innerHTML='<div class="g-none">NO PHOTOS LISTED FOR THIS SPOT ON WIKIMEDIA.<br>GO TAKE THE FIRST ONE — THE VIEW IS ALL YOURS.</div>';
+  if(!strip.length){
+    $("gallery").innerHTML='<div class="g-none">No verified Wikimedia photos for this exact spot yet — we won\'t show you the wrong place.<br><a class="verify" style="color:var(--molten)" href="'+esc(seePhotos(NAME,AREA))+'" target="_blank" rel="noopener">See real photos on the map ↗</a></div>';
     return;
   }
-  const use=strip.length?strip:shots;
-  $("gallery").innerHTML=use.map((s,i)=>'<a class="g-shot" href="'+esc(s.page||"#")+'" target="_blank" rel="noopener" style="animation-delay:'+(i*70)+'ms"><img loading="lazy" alt="'+esc(s.title)+'" src="'+esc(s.src)+'"></a>').join("");
+  $("gallery").innerHTML=strip.map((s,i)=>'<a class="g-shot" href="'+esc(s.page||"#")+'" target="_blank" rel="noopener" style="animation-delay:'+(i*70)+'ms"><img loading="lazy" alt="'+esc(s.title)+'" src="'+esc(s.src)+'"></a>').join("");
   $("galleryCredit").textContent="PHOTOS: WIKIMEDIA — TAP ANY FRAME FOR ITS SOURCE PAGE";
 })();
 
@@ -408,7 +438,7 @@ function pickCard(p,kind,i){
   if(kind==="stay") links+='<a class="pk-link" href="'+hotelsUrl(p.name+" "+(p.area||AREA||""))+'" target="_blank" rel="noopener">rates ↗</a>';
   if(kind==="eat") links+='<a class="pk-link" href="'+gSearch(p.name+" "+(p.area||AREA)+" menu")+'" target="_blank" rel="noopener">menu ↗</a>';
   return '<div class="pk" style="animation-delay:'+(i*70)+'ms">'
-    +'<div class="pk-photo" data-pkphoto="'+esc(p.name+"|"+(p.area||AREA))+'"><div class="ph">'+PH[kind]+'<small>looking for a photo…</small></div></div>'
+    +'<div class="pk-photo" data-pkphoto="'+esc(p.name+"|"+(p.area||AREA))+'" data-icon="'+PH[kind]+'"><div class="ph">'+PH[kind]+'<small>looking for a photo…</small></div></div>'
     +'<div class="pk-body"><div class="pk-top"><span class="pk-name">'+esc(p.name)+'</span>'+confDots(p.confidence)+'</div>'
     +(p.area?'<div class="pk-area">'+esc(p.area)+'</div>':"")
     +(p.why?'<div class="pk-why">'+esc(p.why)+'</div>':"")
@@ -424,17 +454,19 @@ function renderPicks(chId,listId,arr,kind){
 
 async function fillPickPhoto(p){
   const sel='[data-pkphoto="'+CSS.escape(p.name+"|"+(p.area||AREA))+'"]';
-  const shots=await wikiImages(p.name+" "+(p.area||AREA),1,480);
+  // Strict: the matched Wikipedia page title must genuinely be this venue,
+  // or we show no photo. Scan a few results so a real match below a junk #1
+  // still wins. Businesses almost never have an article — that's expected.
+  const shots=await wikiImages(p.name+" "+(p.area||AREA),5,480,p.name,true);
   const host=document.querySelector(sel);
   if(!host) return;
-  if(!shots.length){
-    host.innerHTML='<div class="ph">'+ (host.innerHTML.includes("🍽")?"🍽":host.innerHTML.includes("🛏")?"🛏":"🎟") +'<small>no photo listed — go take the first one</small></div>';
-    return;
-  }
+  const icon=host.dataset.icon||"📷";
+  const see='<a class="ph phlink" href="'+esc(seePhotos(p.name,p.area||AREA))+'" target="_blank" rel="noopener">'+icon+'<small>see real photos ↗</small></a>';
+  if(!shots.length){ host.innerHTML=see; return; }
   host.innerHTML='<img loading="lazy" alt="'+esc(p.name)+'" src="'+esc(shots[0].src)+'">';
   const img=host.querySelector("img");
   img.onload=()=>img.classList.add("in");
-  img.onerror=()=>{ host.innerHTML='<div class="ph">📷<small>no photo listed</small></div>'; };
+  img.onerror=()=>{ host.innerHTML=see; };
 }
 
 function renderWhispers(ws){
@@ -461,7 +493,7 @@ function renderWhispers(ws){
         +'<span class="lib-go">Open storybook →</span></div></a>';
     }).join("");
     rows.forEach(async x=>{
-      const shots=await wikiImages(x.name+" "+(x.area||""),1,400);
+      const shots=await wikiImages(x.name+" "+(x.area||""),4,400,x.name,false);
       const host=document.querySelector('[data-libphoto="'+CSS.escape(x.name)+'"]');
       if(!host||!shots.length) return;
       host.innerHTML='<img loading="lazy" alt="'+esc(x.name)+'" src="'+esc(shots[0].src)+'">';
