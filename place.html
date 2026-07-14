@@ -94,6 +94,7 @@
   .pk-photo a.phlink{text-decoration:none;color:inherit;cursor:pointer}
   .pk-photo a.phlink small{color:var(--molten)}
   .pk-photo a.phlink:hover{background:rgba(255,122,41,.06)}
+  .pk-photo .pk-areatag{position:absolute;left:6px;bottom:6px;z-index:2;font-family:var(--mono);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);background:rgba(10,8,6,.72);border:1px solid rgba(255,122,41,.4);border-radius:5px;padding:2px 6px}
   .pk-body{padding:12px 13px 12px}
   .pk-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
   .pk-name{font-size:15px;font-weight:750;letter-spacing:-.01em}
@@ -335,6 +336,41 @@ async function wikiImages(q,limit,size,matchName,strict){
 }
 const seePhotos=(name,area)=>mapsSearch(name+(area?" "+area:""));
 
+// Wikimedia Commons file search — far broader than Wikipedia articles (many
+// hotels, buildings, trailheads have a Commons photo without an article).
+// Still title-verified so we never show an unrelated file.
+async function commonsImage(name,area){
+  const q=[name,area].filter(Boolean).join(" ");
+  const url="https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*"
+    +"&generator=search&gsrnamespace=6&gsrsearch="+encodeURIComponent(q)+"&gsrlimit=8"
+    +"&prop=imageinfo&iiprop=url&iiurlwidth=640";
+  try{
+    const r=await fetch(url); if(!r.ok) return null;
+    const j=await r.json();
+    const pages=j&&j.query&&j.query.pages; if(!pages) return null;
+    const list=Object.values(pages).sort((a,b)=>(a.index||0)-(b.index||0));
+    for(const p of list){
+      const ii=p.imageinfo&&p.imageinfo[0];
+      const fileTitle=String(p.title||"").replace(/^File:/i,"").replace(/\.[a-z0-9]+$/i,"");
+      if(ii&&(ii.thumburl||ii.url)&&titleRelevant(name,fileTitle,true)){
+        return {src:ii.thumburl||ii.url, page:ii.descriptionurl||null, title:name};
+      }
+    }
+    return null;
+  }catch(e){ return null; }
+}
+// If /api/photo (Google Places, when a key is configured) is available, it
+// returns the exact business's real photo. Keyless deploy → 404/503 → we fall
+// back to the verified free sources below.
+async function placesImage(name,area){
+  try{
+    const r=await fetch("/api/photo?name="+encodeURIComponent(name)+"&area="+encodeURIComponent(area||""));
+    if(!r.ok) return null;
+    const j=await r.json();
+    return (j&&j.src)?{src:j.src,page:j.page||null,title:name,exact:true}:null;
+  }catch(e){ return null; }
+}
+
 /* ---------- hero + gallery ---------- */
 (async function(){
   const shots=await wikiImages(WHERE,10,1000,NAME,false);
@@ -449,24 +485,37 @@ function renderPicks(chId,listId,arr,kind){
   if(!arr.length) return;
   $(chId).classList.remove("hidden");
   $(listId).innerHTML=arr.map((p,i)=>pickCard(p,kind,i)).join("");
-  arr.forEach(p=>fillPickPhoto(p));
+  arr.forEach((p,i)=>fillPickPhoto(p,i));
 }
 
-async function fillPickPhoto(p){
-  const sel='[data-pkphoto="'+CSS.escape(p.name+"|"+(p.area||AREA))+'"]';
-  // Strict: the matched Wikipedia page title must genuinely be this venue,
-  // or we show no photo. Scan a few results so a real match below a junk #1
-  // still wins. Businesses almost never have an article — that's expected.
-  const shots=await wikiImages(p.name+" "+(p.area||AREA),5,480,p.name,true);
-  const host=document.querySelector(sel);
+// Photo resolution, best → last, all verified / honestly-labeled, never LLM:
+//   1) Google Places (exact business photo) — only if /api/photo is keyed
+//   2) verified Wikipedia article photo of the exact venue
+//   3) verified Wikimedia Commons file of the exact venue
+//   4) real photo of the AREA/town, clearly tagged "NEARBY · <area>"
+//   5) a tappable "see real photos ↗" link to the venue's Google Maps photos
+async function fillPickPhoto(p,idx){
+  const area=p.area||AREA;
+  const host=document.querySelector('[data-pkphoto="'+CSS.escape(p.name+"|"+area)+'"]');
   if(!host) return;
   const icon=host.dataset.icon||"📷";
-  const see='<a class="ph phlink" href="'+esc(seePhotos(p.name,p.area||AREA))+'" target="_blank" rel="noopener">'+icon+'<small>see real photos ↗</small></a>';
-  if(!shots.length){ host.innerHTML=see; return; }
-  host.innerHTML='<img loading="lazy" alt="'+esc(p.name)+'" src="'+esc(shots[0].src)+'">';
-  const img=host.querySelector("img");
-  img.onload=()=>img.classList.add("in");
-  img.onerror=()=>{ host.innerHTML=see; };
+  const see='<a class="ph phlink" href="'+esc(seePhotos(p.name,area))+'" target="_blank" rel="noopener">'+icon+'<small>see real photos ↗</small></a>';
+
+  let img=await placesImage(p.name,area);
+  if(!img){ const w=await wikiImages(p.name+" "+area,5,480,p.name,true); if(w[0]) img=w[0]; }
+  if(!img) img=await commonsImage(p.name,area);
+  let areaPhoto=false;
+  if(!img && area){
+    const a=await wikiImages(area,4,640,area,false);
+    if(a.length){ img=a[(idx||0)%a.length]; areaPhoto=true; }
+  }
+  if(!img){ host.innerHTML=see; return; }
+
+  const tag = areaPhoto ? '<span class="pk-areatag">NEARBY · '+esc(area)+'</span>' : '';
+  host.innerHTML='<img loading="lazy" alt="'+esc(p.name)+'" src="'+esc(img.src)+'">'+tag;
+  const el=host.querySelector("img");
+  el.onload=()=>el.classList.add("in");
+  el.onerror=()=>{ host.innerHTML=see; };
 }
 
 function renderWhispers(ws){

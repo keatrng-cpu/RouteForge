@@ -16,6 +16,7 @@ into Google Maps. Every stop opens as its own **storybook page**.
 | `signup.html` | Email signup (Supabase-backed) |
 | `api/forge.js` | Route research (web search over Reddit/forums; sourced stops) |
 | `api/place.js` | Destination research — checks the brain first, researches on a miss, locks the result into the brain |
+| `api/photo.js` | Exact-business photo resolver (Google Places) — optional; the client falls back to keyless free sources without it |
 | `supabase/migrations/` | Database schema: signups, share codes, and the brain |
 
 Plain HTML/CSS/JS — no framework, no build step.
@@ -32,7 +33,12 @@ browser
   │        │                        │      routeforge_places) — instant
   │        │                        └── 2) miss → live research → result
   │        │                               locked into the brain forever
-  │        ├── photos: Wikimedia API (client-side, keyless, credited)
+  │        ├── photos: a never-blank chain, most-exact first —
+  │        │      1) /api/photo (Google Places, exact business) if keyed
+  │        │      2) Wikipedia article  ─┐ title-verified (deterministic
+  │        │      3) Wikimedia Commons  ─┘ token match — never an LLM URL)
+  │        │      4) a real photo of the AREA, tagged "NEARBY · <town>"
+  │        │      5) a "see real photos ↗" link to the venue on Maps
   │        └── prices: live links out (Google Maps / Google Hotels) —
   │                    never AI-generated numbers
   └── signups ──► Supabase (insert-only, unique email)
@@ -52,16 +58,24 @@ before any API key is configured.
   links to live listings for real numbers.
 - Drive times are `number | null`; `null` renders as `?`, never a guess.
 - Whispers (traveler quotes) must carry the real URL they came from.
-- Photos come from Wikimedia, credited and linked; a place with no photo
-  says so instead of faking one.
+- Photos are never invented and never mismatched. Every candidate — from
+  Wikipedia or Commons — must pass a **deterministic** title-token check
+  before it is shown (no LLM ever supplies an image URL). When only an area
+  photo is available it is shown tagged `NEARBY · <town>`, honestly; when
+  nothing verified exists, the card links to the venue's real photos instead
+  of faking one. Exact-business photos come from Google Places when a
+  `GOOGLE_MAPS_API_KEY` is configured.
 
 ## Deploying
 
-1. Deploy to Vercel (static pages + the two `api/` functions are picked up
+1. Deploy to Vercel (static pages + the `api/` functions are picked up
    automatically; `@anthropic-ai/sdk` installs from `package.json`).
 2. Set `ANTHROPIC_API_KEY` to enable live research. Without it: seeded and
    previously-researched storybooks, photos, day-splitting, Maps export,
    saved trips, and all live-price links still work.
+3. Optional: set `GOOGLE_MAPS_API_KEY` (Places API enabled) to turn on
+   exact-business photos via `api/photo.js`. Without it the photo chain
+   still never goes blank — it uses the keyless free sources above.
 
 ## Supabase
 
