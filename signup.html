@@ -6,6 +6,10 @@
 <title>Create your account — RouteForge</title>
 <meta name="description" content="Join RouteForge. Free to plan, no card, nothing auto-renews.">
 <meta name="theme-color" content="#0E0C0A">
+<meta property="og:title" content="Create your account — RouteForge">
+<meta property="og:description" content="Free to plan. No card. Nothing auto-renews.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
 <style>
   :root{
     --coal:#0E0C0A; --iron:#151109; --card:#18140F; --ash:#2B241B; --seam:#3A3226;
@@ -94,8 +98,8 @@
 
 <nav>
   <div class="nav-in">
-    <a class="brand" href="/">Route<span>Forge</span></a>
-    <a class="nav-cta" href="/app.html">Open the planner</a>
+    <a class="brand" href="./index.html">Route<span>Forge</span></a>
+    <a class="nav-cta" href="./app.html">Open the planner</a>
   </div>
 </nav>
 
@@ -107,6 +111,8 @@
   <form id="form" novalidate>
     <label for="email">Email</label>
     <input type="email" id="email" placeholder="you@example.com" autocomplete="email" inputmode="email">
+    <!-- honeypot: humans never see or fill this -->
+    <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
 
     <label>What are you driving?</label>
     <div class="seg" role="group" aria-label="Vehicle">
@@ -141,7 +147,7 @@
   <div class="done hidden" id="done">
     <h2>You're in.</h2>
     <p id="doneMsg">Account created. Go forge something — your first route is waiting.</p>
-    <a class="btn btn-ghost" href="/app.html">Open the planner</a>
+    <a class="btn btn-ghost" href="./app.html">Open the planner</a>
   </div>
 </main>
 
@@ -169,19 +175,28 @@ const valid=e=>/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e);
 
 $("form").addEventListener("submit", async e=>{
   e.preventDefault();
-  const email=$("email").value.trim();
+  const email=$("email").value.trim().toLowerCase();
   if(!valid(email)){
     $("email").classList.add("bad");
     say("That email doesn't look right. Check it and try again.","err");
     $("email").focus();
     return;
   }
+  // Bots fill the honeypot; pretend success and store nothing.
+  if($("website").value){
+    $("form").classList.add("hidden");
+    $("done").classList.remove("hidden");
+    return;
+  }
   $("email").classList.remove("bad");
   $("submit").disabled=true;
   say("Creating your account…");
+  const abort=new AbortController();
+  const timer=setTimeout(()=>abort.abort(),15000);
   try{
     const res=await fetch(SB_URL,{
       method:"POST",
+      signal:abort.signal,
       headers:{
         "Content-Type":"application/json",
         "apikey":SB_KEY,
@@ -192,6 +207,7 @@ $("form").addEventListener("submit", async e=>{
     });
     if(res.status===409 || res.status===201 || res.ok){
       const dupe=res.status===409;
+      try{ localStorage.setItem("rf:email",email); }catch(err){}
       $("form").classList.add("hidden");
       $("done").classList.remove("hidden");
       if(dupe) $("doneMsg").textContent="You're already on the list — no need to sign up twice. Go forge something.";
@@ -200,10 +216,20 @@ $("form").addEventListener("submit", async e=>{
     }
     throw new Error("HTTP "+res.status);
   }catch(err){
-    say("Couldn't reach the server. Check your connection and try again.","err");
+    say(err.name==="AbortError"
+      ?"The server is taking too long. Try again in a moment."
+      :"Couldn't reach the server. Check your connection and try again.","err");
     $("submit").disabled=false;
+  }finally{
+    clearTimeout(timer);
   }
 });
+
+// Returning visitor? Prefill their email.
+try{
+  const prev=localStorage.getItem("rf:email");
+  if(prev && !$("email").value) $("email").value=prev;
+}catch(err){}
 </script>
 </body>
 </html>

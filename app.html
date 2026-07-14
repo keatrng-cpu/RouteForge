@@ -2,8 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>RouteForge — road trips, forged honestly</title>
+<meta name="description" content="Plan a road trip with unlimited stops, honest unknowns, automatic day-splitting, and one-tap export to Google Maps. No account, no paywall.">
+<meta name="theme-color" content="#0E0C0A">
+<meta property="og:title" content="RouteForge — the planner">
+<meta property="og:description" content="Unlimited stops. Honest unknowns. One tap into your nav app.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
 <style>
   :root{
     --coal:#0E0C0A;
@@ -123,7 +129,9 @@
   .btn-mini{
     width:auto;padding:8px 12px;font-size:13px;margin:0;
     background:var(--coal);color:var(--smoke);border:1px solid var(--seam);border-radius:9px;
+    cursor:pointer;font-family:var(--sans);
   }
+  .btn-mini:hover{color:var(--bone)}
   .btn[disabled]{opacity:.45;cursor:not-allowed}
 
   /* status line */
@@ -165,6 +173,26 @@
     background:var(--iron);border:3px solid var(--molten);
   }
   .daybreak .dsum{color:var(--smoke);letter-spacing:0;text-transform:none;display:block;margin-top:2px;font-size:11px}
+  .endpoint{
+    position:relative;margin:2px 0 8px;padding:4px 0;
+    font-size:15px;font-weight:700;letter-spacing:-.01em;
+  }
+  .endpoint::before{
+    content:"";position:absolute;left:-31px;top:9px;width:15px;height:15px;border-radius:50%;
+    background:var(--molten);border:3px solid var(--iron);
+    box-shadow:0 0 12px rgba(255,178,94,.45);
+  }
+  .endpoint.dest::before{background:var(--ember)}
+  .endpoint .ep-label{
+    display:block;font-family:var(--mono);font-size:10px;font-weight:500;
+    letter-spacing:.22em;text-transform:uppercase;color:var(--smoke);
+  }
+  .endpoint .stop-meta{margin-top:4px}
+  .stats-line{
+    font-family:var(--mono);font-size:11px;color:var(--smoke);
+    letter-spacing:.05em;margin:-4px 0 12px;
+  }
+  .stats-line b{color:var(--molten);font-weight:600}
   .stop-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
   .stop-name{font-size:17px;font-weight:700;letter-spacing:-.01em}
   .stop-area{font-size:12px;color:var(--smoke)}
@@ -237,19 +265,39 @@
   @media (prefers-reduced-motion: reduce){
     *{animation:none!important;transition:none!important}
   }
+
+  /* ---------- print: the itinerary is the day pack ---------- */
+  @media print{
+    body{background:#fff;color:#111}
+    .no-print,.stop-actions,.status,.pulse::after{display:none!important}
+    .card{background:#fff;border-color:#bbb}
+    header .eyebrow a{color:#b45309}
+    h1,.stop-name,.stop-why,.endpoint{color:#111}
+    h1 .lit{background:none;-webkit-text-fill-color:#b45309;color:#b45309}
+    .sub,.stop-area,.stop-meta,.stats-line,.daybreak .dsum,.card h2,.foot{color:#444}
+    .daybreak{color:#b45309}
+    .tag.est{color:#92400e;border-color:#d6bb92}
+    .tag.unk{color:#555;border-color:#aaa}
+    .honesty{color:#444;border-left-color:#b45309}
+    .verify{color:#444;border-bottom:none}
+    .rv-note{color:#92400e}
+    .rail::before{background:#d97706}
+    .stop::before{background:#fff;border-color:#d97706;box-shadow:none}
+    .daybreak::before,.endpoint::before{background:#fff;border-color:#d97706;box-shadow:none}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <header>
-    <div class="eyebrow"><a href="/" style="color:var(--ember);text-decoration:none">← RouteForge</a> · the planner</div>
+    <div class="eyebrow"><a href="./index.html" style="color:var(--ember);text-decoration:none">← RouteForge</a> · the planner</div>
     <h1>Route<span class="lit">Forge</span></h1>
     <p class="sub">A road-trip planner that <b>never invents your facts</b>. Unlimited stops, live-checked suggestions, honest unknowns, one-tap export to your nav app. No account. No paywall. Nothing auto-renews — because nothing bills.</p>
   </header>
 
   <!-- ================= PLANNER ================= -->
-  <section class="card" aria-label="Plan a route">
+  <section class="card no-print" aria-label="Plan a route">
     <h2>Forge a route</h2>
     <label for="start">Start</label>
     <input type="text" id="start" placeholder="Fargo, ND" autocomplete="off">
@@ -260,8 +308,8 @@
 
     <div class="row" style="margin-top:14px">
       <div>
-        <label>Vehicle</label>
-        <div class="seg" role="group" aria-label="Vehicle type">
+        <label id="vehLabel">Vehicle</label>
+        <div class="seg" role="group" aria-labelledby="vehLabel">
           <button type="button" id="vehCar" class="on">Car</button>
           <button type="button" id="vehRV">RV / Trailer</button>
         </div>
@@ -289,12 +337,13 @@
     </div>
 
     <button class="btn btn-primary" id="forgeBtn">Forge route</button>
-    <div class="status" id="status" role="status"></div>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
   </section>
 
   <!-- ================= ITINERARY ================= -->
   <section class="card" aria-label="Itinerary">
     <h2>Itinerary <span id="tripTitle" style="color:var(--bone);letter-spacing:0;text-transform:none"></span></h2>
+    <p class="stats-line" id="tripStats" style="display:none"></p>
     <div id="railHost">
       <div class="empty">No route yet. Set your endpoints above and forge one — or add stops by hand below.</div>
     </div>
@@ -302,40 +351,46 @@
       Drive times marked <b style="color:var(--molten)">EST</b> are model estimates; <b>?</b> means unconfirmed — RouteForge shows a gap instead of inventing a number. Verify anything load-bearing before you drive.
     </p>
 
-    <div class="row" style="margin-top:14px">
-      <input type="text" id="manualName" placeholder="Add your own stop…">
+    <div class="row no-print" style="margin-top:14px">
+      <input type="text" id="manualName" placeholder="Add your own stop…" aria-label="Add your own stop">
       <button class="btn-mini" id="addManual" style="flex:0 0 auto">Add stop</button>
     </div>
   </section>
 
   <!-- ================= EXPORT ================= -->
-  <section class="card hidden" id="exportCard" aria-label="Navigate">
+  <section class="card hidden no-print" id="exportCard" aria-label="Navigate">
     <h2>Drive it</h2>
-    <p style="font-size:14px;color:var(--smoke)">Each day opens as a ready-made route in Google Maps — we do the discovery and day-splitting, your nav app does the turns. No waypoint caps hit.</p>
+    <p style="font-size:14px;color:var(--smoke)">Each day opens as a ready-made route in Google Maps — we do the discovery and day-splitting, your nav app does the turns. No waypoint caps hit. Printing this page gives you a paper day pack.</p>
     <div class="day-links" id="dayLinks"></div>
   </section>
 
   <!-- ================= SAVE / SHARE ================= -->
-  <section class="card" aria-label="Save and share">
+  <section class="card no-print" aria-label="Save and share">
     <h2>Keep it · share it</h2>
     <div class="row">
       <button class="btn btn-ghost" id="saveBtn" style="margin-top:0">Save trip</button>
       <button class="btn btn-ghost" id="shareBtn" style="margin-top:0">Share trip</button>
     </div>
     <div class="row" style="margin-top:10px">
-      <select id="tripList"><option value="">My saved trips…</option></select>
+      <select id="tripList" aria-label="My saved trips"><option value="">My saved trips…</option></select>
       <button class="btn-mini" id="loadBtn" style="flex:0 0 auto">Load</button>
+      <button class="btn-mini" id="deleteBtn" style="flex:0 0 auto" aria-label="Delete selected saved trip">Delete</button>
     </div>
     <div class="row" style="margin-top:10px">
-      <input type="text" id="shareCode" placeholder="Have a code? RF-XXXX">
+      <input type="text" id="shareCode" placeholder="Have a code? RF-XXXXXX" aria-label="Open a shared trip by code" autocomplete="off">
       <button class="btn-mini" id="loadShared" style="flex:0 0 auto">Open</button>
     </div>
-    <div class="status" id="saveStatus"></div>
-    <p class="honesty">Trips save to this device's app storage. Shared trips are readable by <b>anyone with the code</b> — don't put private notes in a shared trip. Sharing is free for every collaborator, not a paid tier.</p>
+    <div class="row" style="margin-top:10px">
+      <button class="btn-mini" id="exportBtn" style="flex:1">Download .json</button>
+      <button class="btn-mini" id="importBtn" style="flex:1">Import .json</button>
+      <input type="file" id="importFile" accept=".json,application/json" class="hidden" aria-hidden="true">
+    </div>
+    <div class="status" id="saveStatus" role="status" aria-live="polite"></div>
+    <p class="honesty">Trips save to this device. Share codes publish a copy to RouteForge — <b>anyone with the code</b> can open it, so don't put private notes in a shared trip. Sharing is free for every collaborator, not a paid tier. The .json download is yours to keep — no lock-in.</p>
   </section>
 
   <!-- ================= DESIGN LEDGER ================= -->
-  <details class="ledger">
+  <details class="ledger no-print">
     <summary>Design ledger — every market weakness, and the fix shipped here</summary>
     <div class="ledger-body">
       <div class="fix"><div class="prob"><b>Roadtrippers:</b> cut free users from ~27 waypoints to 7; billing dark patterns bred rage-churn.</div><div class="sol"><b>Fix:</b> unlimited stops, no account, no billing surface at all. Nothing can auto-renew.</div></div>
@@ -350,44 +405,129 @@
     </div>
   </details>
 
-  <p class="foot">ROUTEFORGE · PROTOTYPE 0.1 · ESTIMATES ARE LABELED · UNKNOWNS STAY UNKNOWN</p>
+  <p class="foot">ROUTEFORGE · PROTOTYPE 0.2 · ESTIMATES ARE LABELED · UNKNOWNS STAY UNKNOWN</p>
 </div>
 
 <script>
 /* =====================================================
-   RouteForge — state
+   RouteForge — config + state
 ===================================================== */
+const SB_BASE="https://lamdouidiiuqtplqhsdz.supabase.co/rest/v1";
+const SB_KEY="sb_publishable_RrMGUSXa0vGBXTzQ4ueORg_IjTLFRv-";
+const SB_HEADERS={
+  "Content-Type":"application/json",
+  "apikey":SB_KEY,
+  "Authorization":"Bearer "+SB_KEY
+};
+
 const S = {
-  trip: { name:"", vehicle:"car", maxHours:6, stops:[] },
+  trip: { name:"", vehicle:"car", maxHours:6, start:"", end:"", lastLeg:null, stops:[] },
   busy:false
 };
 const $ = id => document.getElementById(id);
 const esc = s => String(s??"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 /* =====================================================
-   storage adapter (artifact key-value store; in-memory fallback)
-   — one key per trip, batched writes
+   storage adapter
+   — "artifact": Claude artifact key-value store
+   — "local":    browser localStorage
+   — "none":     nothing persists (private mode etc.)
 ===================================================== */
-const store = {
-  ok: typeof window!=="undefined" && !!window.storage,
-  async get(k){ try{ const r=await window.storage.get(k); return r?JSON.parse(r.value):null }catch(e){ return null } },
-  async getShared(k){ try{ const r=await window.storage.get(k,true); return r?JSON.parse(r.value):null }catch(e){ return null } },
-  async set(k,v,sh=false){ try{ const r=await window.storage.set(k,JSON.stringify(v),sh); return !!r }catch(e){ return false } },
-  async list(p){ try{ const r=await window.storage.list(p); return r?r.keys:[] }catch(e){ return [] } }
-};
+const store = (() => {
+  if (typeof window!=="undefined" && window.storage) {
+    return {
+      mode:"artifact",
+      async get(k){ try{ const r=await window.storage.get(k); return r?JSON.parse(r.value):null }catch(e){ return null } },
+      async set(k,v){ try{ return !!(await window.storage.set(k,JSON.stringify(v))) }catch(e){ return false } },
+      async del(k){ try{ await window.storage.delete(k); return true }catch(e){ return false } },
+      async list(p){ try{ const r=await window.storage.list(p); return r?r.keys:[] }catch(e){ return [] } },
+      async getShared(k){ try{ const r=await window.storage.get(k,true); return r?JSON.parse(r.value):null }catch(e){ return null } },
+      async setShared(k,v){ try{ return !!(await window.storage.set(k,JSON.stringify(v),true)) }catch(e){ return false } }
+    };
+  }
+  try {
+    localStorage.setItem("rf:probe","1"); localStorage.removeItem("rf:probe");
+    return {
+      mode:"local",
+      async get(k){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null }catch(e){ return null } },
+      async set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true }catch(e){ return false } },
+      async del(k){ try{ localStorage.removeItem(k); return true }catch(e){ return false } },
+      async list(p){ try{ return Object.keys(localStorage).filter(k=>k.startsWith(p)).sort() }catch(e){ return [] } },
+      async getShared(){ return null },
+      async setShared(){ return false }
+    };
+  } catch(e) {
+    const no=async()=>null, noB=async()=>false, noL=async()=>[];
+    return { mode:"none", get:no, set:noB, del:noB, list:noL, getShared:no, setShared:noB };
+  }
+})();
+
+/* =====================================================
+   sanitizers — everything that enters state goes through here,
+   whether it came from the model, a share code, or a .json import
+===================================================== */
+const numOrNull = v => (typeof v==="number" && isFinite(v) && v>=0 && v<100000) ? Math.round(v) : null;
+
+function sanitizeStop(s){
+  s = s && typeof s==="object" ? s : {};
+  return {
+    id: crypto.randomUUID(),
+    name: String(s.name||"Unnamed stop").slice(0,80),
+    area: String(s.area||"").slice(0,60),
+    why: String(s.why||"").slice(0,120),
+    category: String(s.category||"").slice(0,30),
+    drive: numOrNull(s.drive ?? s.drive_min_from_prev),
+    detour: numOrNull(s.detour ?? s.detour_min),
+    confidence: ["high","medium","low"].includes(s.confidence) ? s.confidence : "low",
+    source: s.source==="user" ? "user" : "ai"
+  };
+}
+
+function sanitizeTrip(t){
+  t = t && typeof t==="object" ? t : {};
+  return {
+    name: String(t.name||"").slice(0,120),
+    vehicle: t.vehicle==="rv" ? "rv" : "car",
+    maxHours: Math.min(Math.max(parseInt(t.maxHours,10)||6,2),10),
+    start: String(t.start||"").slice(0,200),
+    end: String(t.end||"").slice(0,200),
+    lastLeg: numOrNull(t.lastLeg),
+    stops: (Array.isArray(t.stops)?t.stops:[]).slice(0,60).map(sanitizeStop)
+  };
+}
 
 /* =====================================================
    AI call — the anti-hallucination contract
+   1) POST api/forge (server-side key, structured outputs)
+   2) direct call (works inside the Claude artifact runtime)
 ===================================================== */
-function buildPrompt(start,end,vibe,n,vehicle){
-  return `You are RouteForge's route intelligence. Plan driving-corridor stops between "${start}" and "${end}".
-Traveler interests: ${vibe||"general — scenic, memorable, worth a detour"}. Vehicle: ${vehicle==="rv"?"large RV/trailer — strongly prefer stops with big-vehicle parking and easy access":"car"}.
+const ROUTE_SCHEMA={
+  type:"object",additionalProperties:false,
+  required:["stops","last_leg_min","route_summary"],
+  properties:{
+    stops:{type:"array",items:{
+      type:"object",additionalProperties:false,
+      required:["name","area","why","category","drive_min_from_prev","detour_min","confidence"],
+      properties:{
+        name:{type:"string"},area:{type:"string"},why:{type:"string"},category:{type:"string"},
+        drive_min_from_prev:{anyOf:[{type:"number"},{type:"null"}]},
+        detour_min:{anyOf:[{type:"number"},{type:"null"}]},
+        confidence:{type:"string",enum:["high","medium","low"]}
+      }}},
+    last_leg_min:{anyOf:[{type:"number"},{type:"null"}]},
+    route_summary:{type:"string"}
+  }
+};
+
+function buildPrompt(p){
+  return `You are RouteForge's route intelligence. Plan driving-corridor stops between "${p.start}" and "${p.end}".
+Traveler interests: ${p.vibe||"general — scenic, memorable, worth a detour"}. Vehicle: ${p.vehicle==="rv"?"large RV/trailer — strongly prefer stops with big-vehicle parking and easy access":"car"}.
 
 HARD RULES (violating any = failure):
 - Respond with ONLY a JSON object. No prose, no markdown fences.
-- Exactly ${n} stops, ordered along the realistic driving corridor from start to end.
+- Exactly ${p.stops} stops, ordered along the realistic driving corridor from start to end.
 - NEVER invent opening hours, prices, or open/closed status. Do not include them at all.
-- drive_min_from_prev = estimated driving minutes from the previous point (from "${start}" for the first stop; also include final leg to "${end}" as last_leg_min). If you are not reasonably confident, use null instead of guessing.
+- drive_min_from_prev = estimated driving minutes from the previous point (from "${p.start}" for the first stop); last_leg_min = estimated minutes from the final stop to "${p.end}". If you are not reasonably confident, use null instead of guessing.
 - confidence: "high" | "medium" | "low" — how sure you are this place exists as described and sits near the corridor.
 - why: max 12 words, concrete, no marketing fluff.
 - Keep every string short.
@@ -396,63 +536,98 @@ JSON shape:
 {"stops":[{"name":"","area":"town, ST","why":"","category":"","drive_min_from_prev":null,"detour_min":null,"confidence":"medium"}],"last_leg_min":null,"route_summary":"one short sentence"}`;
 }
 
+async function forgeViaProxy(p){
+  let res;
+  try{
+    res=await fetch("api/forge",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)});
+  }catch(e){ return {unavailable:true}; }
+  if(res.status===404||res.status===405||res.status===501) return {unavailable:true};
+  if(res.status===503){
+    const j=await res.json().catch(()=>({}));
+    if(j.error==="not-configured") return {unavailable:true};
+    throw new Error("proxy-503");
+  }
+  if(res.status===429) throw new Error("rate-limited");
+  if(!res.ok) throw new Error("proxy-"+res.status);
+  return {plan: await res.json()};
+}
+
+async function forgeDirect(p){
+  const body={
+    model:"claude-opus-4-8",
+    max_tokens:8000,
+    thinking:{type:"adaptive"},
+    output_config:{effort:"medium",format:{type:"json_schema",schema:ROUTE_SCHEMA}},
+    messages:[{role:"user",content:buildPrompt(p)}]
+  };
+  if(p.live) body.tools=[{type:"web_search_20260209",name:"web_search",max_uses:5}];
+  const res=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "anthropic-version":"2023-06-01",
+      "anthropic-dangerous-direct-browser-access":"true"
+    },
+    body:JSON.stringify(body)
+  });
+  if(!res.ok) throw new Error("API "+res.status);
+  const data=await res.json();
+  const texts=(data.content||[]).filter(b=>b.type==="text");
+  const text=texts.length?texts[texts.length-1].text:"";
+  const plan=extractJSON(text);
+  if(!plan||!Array.isArray(plan.stops)||!plan.stops.length) throw new Error("no-json");
+  return plan;
+}
+
+function extractJSON(t){
+  if(!t) return null;
+  t=t.replace(/```json|```/g,"").trim();
+  try{ return JSON.parse(t) }catch(e){}
+  const a=t.indexOf("{"), b=t.lastIndexOf("}");
+  if(a<0||b<=a) return null;
+  try{ return JSON.parse(t.slice(a,b+1)) }catch(e){ return null }
+}
+
 async function forgeRoute(){
   const start=$("start").value.trim(), end=$("end").value.trim();
   if(!start||!end){ setStatus("Enter both a start and a destination.", "err"); return; }
   if(S.busy) return;
   S.busy=true; $("forgeBtn").disabled=true;
   const live=$("liveCheck").checked;
+  const params={start,end,vibe:$("vibe").value.trim(),stops:+$("nstops").value||4,vehicle:S.trip.vehicle,live};
   setStatus(live?"Forging — live-checking the corridor…":"Forging route…","", true);
   try{
-    const body={
-      model:"claude-sonnet-4-6",
-      max_tokens:1000,
-      messages:[{role:"user",content:buildPrompt(start,end,$("vibe").value.trim(),$("nstops").value,S.trip.vehicle)}]
-    };
-    if(live) body.tools=[{type:"web_search_20250305",name:"web_search"}];
-    const res=await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)
-    });
-    if(!res.ok) throw new Error("API "+res.status);
-    const data=await res.json();
-    const text=(data.content||[]).filter(b=>b.type==="text").map(b=>b.text||"").join("\n");
-    const parsed=extractJSON(text);
-    if(!parsed||!Array.isArray(parsed.stops)||!parsed.stops.length) throw new Error("no-json");
+    let plan=null;
+    const viaProxy=await forgeViaProxy(params);
+    if(viaProxy.plan){ plan=viaProxy.plan; }
+    else{
+      // No server function here — try the direct path (works inside the
+      // Claude artifact runtime, where the API is proxied keylessly).
+      plan=await forgeDirect(params);
+    }
+    if(!plan||!Array.isArray(plan.stops)||!plan.stops.length) throw new Error("no-json");
     S.trip.name=`${start} → ${end}`;
     S.trip.start=start; S.trip.end=end;
-    S.trip.lastLeg=numOrNull(parsed.last_leg_min);
-    S.trip.stops=parsed.stops.map(s=>({
-      id:crypto.randomUUID(),
-      name:String(s.name||"Unnamed stop").slice(0,80),
-      area:String(s.area||"").slice(0,60),
-      why:String(s.why||"").slice(0,120),
-      category:String(s.category||"").slice(0,30),
-      drive:numOrNull(s.drive_min_from_prev),
-      detour:numOrNull(s.detour_min),
-      confidence:["high","medium","low"].includes(s.confidence)?s.confidence:"low",
-      source:"ai"
-    }));
+    S.trip.lastLeg=numOrNull(plan.last_leg_min);
+    S.trip.stops=plan.stops.slice(0,20).map(s=>sanitizeStop({...s, source:"ai"}));
     render();
-    setStatus(parsed.route_summary?String(parsed.route_summary).slice(0,140):"Route forged.","ok");
+    setStatus(plan.route_summary?String(plan.route_summary).slice(0,140):"Route forged.","ok");
   }catch(e){
-    setStatus(e.message==="no-json"
-      ?"The model returned an unreadable plan. Forge again — it usually lands on retry."
-      :(store.ok
-        ?"Couldn't reach route intelligence. Check connection and forge again."
-        :"AI generation isn't wired into this hosted demo yet — add stops manually below."),"err");
+    if(e.message==="rate-limited"){
+      setStatus("Easy on the bellows — too many forges in a minute. Wait a moment and try again.","err");
+    }else if(e.message==="no-json"){
+      setStatus("The model returned an unreadable plan. Forge again — it usually lands on retry.","err");
+    }else if(store.mode==="artifact"){
+      setStatus("Couldn't reach route intelligence. Check connection and forge again.","err");
+    }else{
+      setStatus("AI forging isn't wired up on this host — deploy api/forge with an ANTHROPIC_API_KEY (see README). Manual stops still work below.","err");
+    }
   }finally{ S.busy=false; $("forgeBtn").disabled=false; }
 }
-function extractJSON(t){
-  if(!t) return null;
-  t=t.replace(/```json|```/g,"").trim();
-  const a=t.indexOf("{"), b=t.lastIndexOf("}");
-  if(a<0||b<=a) return null;
-  try{ return JSON.parse(t.slice(a,b+1)) }catch(e){ return null }
-}
-const numOrNull=v=> (typeof v==="number"&&isFinite(v)&&v>=0)?Math.round(v):null;
 
 /* =====================================================
-   day splitting — Furkot's logic, one slider's worth of UX
+   day splitting — Furkot's logic, one slider's worth of UX.
+   The final leg to the destination counts against the last day.
 ===================================================== */
 const UNKNOWN_LEG=45; // planning placeholder, always displayed as "?"
 function splitDays(){
@@ -464,6 +639,11 @@ function splitDays(){
     cur.push(st); acc+=leg; if(st.drive==null)anyUnknown=true;
   });
   if(cur.length) days.push({stops:cur,mins:acc,unknown:anyUnknown});
+  if(days.length&&S.trip.end){
+    const last=days[days.length-1];
+    if(S.trip.lastLeg!=null) last.mins+=S.trip.lastLeg;
+    else last.unknown=true;
+  }
   return days;
 }
 
@@ -477,24 +657,36 @@ function confDots(c){
   return h+"</span>";
 }
 function mapsSearch(q){ return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q); }
+function fmtH(mins){ const h=Math.floor(mins/60),m=mins%60; return `${h}h${m?` ${m}m`:""}`; }
 
 function render(){
   const host=$("railHost");
   if(!S.trip.stops.length){
     host.innerHTML='<div class="empty">No route yet. Set your endpoints above and forge one — or add stops by hand below.</div>';
     $("honesty").style.display="none";
+    $("tripStats").style.display="none";
     $("exportCard").classList.add("hidden");
     $("tripTitle").textContent="";
+    schedulePersist();
     return;
   }
   $("tripTitle").textContent="· "+(S.trip.name||"");
   $("honesty").style.display="block";
   const days=splitDays();
+  const totalMins=days.reduce((a,d)=>a+d.mins,0);
+  const unknownLegs=S.trip.stops.filter(s=>s.drive==null).length+((S.trip.end&&S.trip.lastLeg==null)?1:0);
+  $("tripStats").style.display="block";
+  $("tripStats").innerHTML=
+    `<b>${days.length}</b> day${days.length>1?"s":""} · ~<b>${esc(fmtH(totalMins))}</b> driving`+
+    (unknownLegs?` · <b>${unknownLegs}</b> unconfirmed leg${unknownLegs>1?"s":""} (?)`:"");
+
   let html='<div class="rail">';
+  if(S.trip.start){
+    html+=`<div class="endpoint"><span class="ep-label">Start</span>${esc(S.trip.start)}</div>`;
+  }
   let idx=0;
   days.forEach((d,di)=>{
-    const h=Math.floor(d.mins/60), m=d.mins%60;
-    html+=`<div class="daybreak">Day ${di+1}<span class="dsum">~${h}h${m?` ${m}m`:""} driving${d.unknown?" · includes unconfirmed legs (?)":""}</span></div>`;
+    html+=`<div class="daybreak">Day ${di+1}<span class="dsum">~${esc(fmtH(d.mins))} driving${d.unknown?" · includes unconfirmed legs (?)":""}</span></div>`;
     d.stops.forEach(st=>{
       const leg = st.drive!=null
         ? `<span class="tag est">EST ${st.drive} min drive</span>`
@@ -521,10 +713,20 @@ function render(){
       idx++;
     });
   });
+  if(S.trip.end){
+    const finalLeg = S.trip.lastLeg!=null
+      ? `<span class="tag est">EST ${S.trip.lastLeg} min drive</span>`
+      : `<span class="tag unk">? final leg unconfirmed</span>`;
+    html+=`<div class="endpoint dest"><span class="ep-label">Destination</span>${esc(S.trip.end)}
+      <div class="stop-meta">${finalLeg}
+        <a class="verify" target="_blank" rel="noopener" href="${mapsSearch(S.trip.end)}">verify on map</a>
+      </div></div>`;
+  }
   html+="</div>";
   host.innerHTML=html;
   host.querySelectorAll("button[data-a]").forEach(b=>b.addEventListener("click",onStopAction));
   renderExport(days);
+  schedulePersist();
 }
 
 function renderExport(days){
@@ -573,54 +775,166 @@ function onStopAction(e){
 }
 
 /* =====================================================
-   save / share
+   save / load / delete / share / import / export
 ===================================================== */
 const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,60)||"trip";
+
+function tripSnapshot(){
+  return {
+    v:1, name:S.trip.name, vehicle:S.trip.vehicle, maxHours:S.trip.maxHours,
+    start:S.trip.start, end:S.trip.end, lastLeg:S.trip.lastLeg,
+    stops:S.trip.stops.map(({id,...rest})=>rest)
+  };
+}
+
 async function saveTrip(){
   if(!S.trip.stops.length){ saveMsg("Nothing to save yet — forge a route first.","err"); return; }
-  if(!store.ok){ saveMsg("Storage isn't available in this environment.","err"); return; }
+  if(store.mode==="none"){ saveMsg("This browser blocks storage — try the .json download instead.","err"); return; }
   if(!S.trip.name) S.trip.name=($("start").value||"Trip")+" → "+($("end").value||"");
-  const ok=await store.set("rftrip:"+slug(S.trip.name),S.trip);
+  const ok=await store.set("rftrip:"+slug(S.trip.name),tripSnapshot());
   saveMsg(ok?`Saved "${S.trip.name}".`:"Save failed — try again.", ok?"ok":"err");
   if(ok) refreshTripList();
 }
+
 async function refreshTripList(){
-  if(!store.ok) return;
   const keys=await store.list("rftrip:");
   const sel=$("tripList");
   sel.innerHTML='<option value="">My saved trips…</option>'+
     keys.map(k=>`<option value="${esc(k)}">${esc(k.replace("rftrip:","").replace(/-/g," "))}</option>`).join("");
 }
+
 async function loadTrip(){
   const k=$("tripList").value; if(!k){ saveMsg("Pick a saved trip first.","err"); return; }
   const t=await store.get(k);
   if(!t){ saveMsg("Couldn't load that trip.","err"); return; }
-  applyTrip(t); saveMsg(`Loaded "${t.name}".`,"ok");
+  applyTrip(t); saveMsg(`Loaded "${S.trip.name||"trip"}".`,"ok");
 }
+
+async function deleteTrip(){
+  const k=$("tripList").value; if(!k){ saveMsg("Pick a saved trip to delete.","err"); return; }
+  const label=k.replace("rftrip:","").replace(/-/g," ");
+  const ok=await store.del(k);
+  saveMsg(ok?`Deleted "${label}".`:"Delete failed.", ok?"ok":"err");
+  if(ok) refreshTripList();
+}
+
+const CODE_ALPHABET="ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // no 0/O/1/I/L lookalikes
+function genCode(len=6){
+  const a=new Uint32Array(len); crypto.getRandomValues(a);
+  let s=""; for(const v of a) s+=CODE_ALPHABET[v%CODE_ALPHABET.length];
+  return "RF-"+s;
+}
+
 async function shareTrip(){
   if(!S.trip.stops.length){ saveMsg("Forge a route before sharing.","err"); return; }
-  if(!store.ok){ saveMsg("Storage isn't available in this environment.","err"); return; }
-  const code="RF-"+Math.random().toString(36).slice(2,6).toUpperCase();
-  const ok=await store.set("rfshared:"+code,S.trip,true);
-  saveMsg(ok?`Share code: ${code} — anyone with it can open this trip.`:"Share failed — try again.", ok?"ok":"err");
+  saveMsg("Publishing share code…");
+  const payload=tripSnapshot();
+  try{
+    let code=null;
+    if(store.mode==="artifact"){
+      code=genCode(4);
+      const ok=await store.setShared("rfshared:"+code,payload);
+      if(!ok) throw new Error("share-failed");
+    }else{
+      for(let attempt=0;attempt<3&&!code;attempt++){
+        const candidate=genCode(6);
+        const res=await fetch(SB_BASE+"/routeforge_trips",{
+          method:"POST",
+          headers:{...SB_HEADERS,"Prefer":"return=minimal"},
+          body:JSON.stringify({code:candidate,data:payload})
+        });
+        if(res.status===201||res.ok){ code=candidate; break; }
+        if(res.status===409) continue;          // code collision — roll again
+        throw new Error("share-"+res.status);
+      }
+      if(!code) throw new Error("share-collisions");
+    }
+    let copied=false;
+    try{ await navigator.clipboard.writeText(code); copied=true; }catch(e){}
+    saveMsg(`Share code: ${code}${copied?" (copied to clipboard)":""} — anyone with it can open this trip.`,"ok");
+  }catch(e){
+    saveMsg("Share failed — check your connection and try again.","err");
+  }
 }
+
 async function loadShared(){
   const code=$("shareCode").value.trim().toUpperCase();
-  if(!/^RF-[A-Z0-9]{4}$/.test(code)){ saveMsg("Codes look like RF-7K2P.","err"); return; }
-  const t=await store.getShared("rfshared:"+code);
-  if(!t){ saveMsg("No trip found for that code.","err"); return; }
-  applyTrip(t); saveMsg(`Opened shared trip "${t.name}".`,"ok");
+  if(!/^RF-[A-Z0-9]{4,8}$/.test(code)){ saveMsg("Codes look like RF-7K2P4M.","err"); return; }
+  saveMsg("Opening shared trip…");
+  try{
+    let t=null;
+    if(store.mode==="artifact"){
+      t=await store.getShared("rfshared:"+code);
+    }else{
+      const res=await fetch(SB_BASE+"/rpc/routeforge_get_trip",{
+        method:"POST",headers:SB_HEADERS,body:JSON.stringify({share_code:code})
+      });
+      if(!res.ok) throw new Error("open-"+res.status);
+      t=await res.json();
+    }
+    if(!t){ saveMsg("No trip found for that code.","err"); return; }
+    applyTrip(t); saveMsg(`Opened shared trip "${S.trip.name||"trip"}".`,"ok");
+  }catch(e){
+    saveMsg("Couldn't reach the share service — check your connection.","err");
+  }
 }
+
+function exportTrip(){
+  if(!S.trip.stops.length){ saveMsg("Nothing to download yet — forge a route first.","err"); return; }
+  if(!S.trip.name) S.trip.name=(S.trip.start||"Trip")+" → "+(S.trip.end||"");
+  const blob=new Blob([JSON.stringify(tripSnapshot(),null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=slug(S.trip.name)+".routeforge.json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  saveMsg("Downloaded. That file is the whole trip — no lock-in.","ok");
+}
+
+function importTrip(file){
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const t=JSON.parse(String(reader.result));
+      if(!t||!Array.isArray(t.stops)||!t.stops.length) throw new Error("empty");
+      applyTrip(t);
+      saveMsg(`Imported "${S.trip.name||"trip"}".`,"ok");
+    }catch(e){
+      saveMsg("That file doesn't look like a RouteForge trip.","err");
+    }
+  };
+  reader.onerror=()=>saveMsg("Couldn't read that file.","err");
+  reader.readAsText(file);
+}
+
 function applyTrip(t){
-  S.trip={ name:t.name||"", vehicle:t.vehicle||"car", maxHours:t.maxHours||6,
-    start:t.start||"", end:t.end||"", lastLeg:t.lastLeg??null,
-    stops:Array.isArray(t.stops)?t.stops:[] };
+  S.trip=sanitizeTrip(t);
   $("start").value=S.trip.start; $("end").value=S.trip.end;
   $("maxh").value=S.trip.maxHours; $("maxhVal").textContent=S.trip.maxHours+" h/day";
   setVehicle(S.trip.vehicle,false);
   render();
 }
 function saveMsg(m,cls){ const el=$("saveStatus"); el.textContent=m; el.className="status "+(cls||""); }
+
+/* =====================================================
+   draft autosave — the plan survives a reload
+===================================================== */
+let persistTimer=null;
+function schedulePersist(){
+  if(store.mode==="none") return;
+  clearTimeout(persistTimer);
+  persistTimer=setTimeout(()=>{
+    store.set("rf:draft",{trip:tripSnapshot(),vibe:$("vibe").value.slice(0,300)});
+  },400);
+}
+async function restoreDraft(){
+  const d=await store.get("rf:draft");
+  if(d&&d.trip&&Array.isArray(d.trip.stops)&&d.trip.stops.length){
+    applyTrip(d.trip);
+    if(typeof d.vibe==="string") $("vibe").value=d.vibe;
+    setStatus("Restored your last trip from this device.","ok");
+  }
+}
 
 /* =====================================================
    ui wiring
@@ -636,28 +950,44 @@ $("vehCar").onclick=()=>setVehicle("car");
 $("vehRV").onclick=()=>setVehicle("rv");
 $("maxh").oninput=e=>{ S.trip.maxHours=+e.target.value; $("maxhVal").textContent=e.target.value+" h/day"; if(S.trip.stops.length)render(); };
 $("forgeBtn").onclick=forgeRoute;
-$("addManual").onclick=()=>{
+["start","end","vibe"].forEach(id=>{
+  $(id).addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); forgeRoute(); } });
+});
+function addManualStop(){
   const n=$("manualName").value.trim(); if(!n)return;
-  S.trip.stops.push({id:crypto.randomUUID(),name:n.slice(0,80),area:"",why:"",category:"",drive:null,detour:null,confidence:"high",source:"user"});
+  S.trip.stops.push(sanitizeStop({name:n,confidence:"high",source:"user"}));
   if(!S.trip.start) S.trip.start=$("start").value.trim();
   if(!S.trip.end) S.trip.end=$("end").value.trim();
+  if(!S.trip.name&&(S.trip.start||S.trip.end)) S.trip.name=`${S.trip.start||"?"} → ${S.trip.end||"?"}`;
   $("manualName").value="";
   render();
-};
+}
+$("addManual").onclick=addManualStop;
+$("manualName").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); addManualStop(); } });
 $("saveBtn").onclick=saveTrip;
 $("loadBtn").onclick=loadTrip;
+$("deleteBtn").onclick=deleteTrip;
 $("shareBtn").onclick=shareTrip;
 $("loadShared").onclick=loadShared;
+$("shareCode").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); loadShared(); } });
+$("exportBtn").onclick=exportTrip;
+$("importBtn").onclick=()=>$("importFile").click();
+$("importFile").addEventListener("change",e=>{
+  const f=e.target.files&&e.target.files[0];
+  if(f) importTrip(f);
+  e.target.value="";
+});
 
-refreshTripList();
-
-/* hosted-demo mode: outside the Claude runtime there's no keyless AI proxy or app storage */
-if(!store.ok){
-  const n=document.createElement("p");
-  n.className="honesty";
-  n.innerHTML='Hosted demo: AI route generation and cloud saving need the full build (server-side API key — coming). Manual stops, day-splitting, and Google Maps export are fully live.';
-  document.querySelector("header").appendChild(n);
-}
+(async function init(){
+  if(store.mode==="none"){
+    const n=document.createElement("p");
+    n.className="honesty";
+    n.textContent="This browser blocks storage, so trips can't be saved on this device — use the .json download to keep a copy.";
+    document.querySelector("header").appendChild(n);
+  }
+  await restoreDraft();
+  refreshTripList();
+})();
 </script>
 </body>
 </html>
