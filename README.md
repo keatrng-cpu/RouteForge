@@ -1,92 +1,76 @@
 # RouteForge
 
-Road trips, forged honestly. A road-trip planner that **never invents your
-facts**: unlimited stops, live-checked suggestions, honest unknowns
-(`?` instead of a made-up number), automatic day-splitting, and one-tap
-export of each day into Google Maps. No account, no paywall, nothing
-auto-renews.
+Road trips researched, not invented. Pick two points and RouteForge reads
+Reddit, X, forums and trip reports for the stops travelers actually rave
+about — with real photos, real sources, honest unknowns (`?` instead of a
+made-up number), automatic day-splitting, and one-tap export of each day
+into Google Maps. Every stop opens as its own **storybook page**.
 
 ## Pages
 
 | File | What it is |
 | --- | --- |
 | `index.html` | Marketing landing page |
-| `app.html` | The planner — everything happens here |
+| `app.html` | The planner — research a route, split days, export to Maps |
+| `place.html` | A destination's **storybook**: hero photo, "are we there yet?" ticker, gallery, food / adventures / stays with photos, traveler whispers, live-price links, and the growing library |
 | `signup.html` | Email signup (Supabase-backed) |
-| `api/forge.js` | Serverless route-intelligence proxy (holds the Anthropic key) |
-| `supabase/migrations/` | Database schema for signups + share codes |
+| `api/forge.js` | Route research (web search over Reddit/forums; sourced stops) |
+| `api/place.js` | Destination research — checks the brain first, researches on a miss, locks the result into the brain |
+| `supabase/migrations/` | Database schema: signups, share codes, and the brain |
 
-Plain HTML/CSS/JS — no framework, no build step. Open `index.html` in a
-browser or run `npm run dev` (serves on `http://localhost:4173`).
+Plain HTML/CSS/JS — no framework, no build step.
 
 ## Architecture
 
 ```
-browser (static pages)
-  ├── AI route generation ──► /api/forge ──► Anthropic API (claude-opus-4-8,
-  │        │                                 structured outputs + web search)
-  │        └── fallback: direct call (only works inside the Claude
-  │            artifact runtime, where the API is proxied keylessly)
-  ├── saved trips ──► localStorage (or the artifact KV store)
-  ├── share codes ──► Supabase (insert-only table + code-lookup RPC)
-  └── signups ──► Supabase (insert-only table, unique email)
+browser
+  ├── /app.html   route research ──► /api/forge ──► Anthropic API
+  │                                   (claude-opus-4-8 + web search,
+  │                                    structured outputs)
+  ├── /place.html storybooks ──► /api/place
+  │        │                        ├── 1) the BRAIN (Supabase
+  │        │                        │      routeforge_places) — instant
+  │        │                        └── 2) miss → live research → result
+  │        │                               locked into the brain forever
+  │        ├── photos: Wikimedia API (client-side, keyless, credited)
+  │        └── prices: live links out (Google Maps / Google Hotels) —
+  │                    never AI-generated numbers
+  └── signups ──► Supabase (insert-only, unique email)
 ```
+
+### The brain
+
+`routeforge_places` is an append-only public library: the first traveler to
+open a destination pays the research cost once; everyone after gets the
+storybook instantly. Rows are immutable (insert-only RLS, size-capped,
+public read). Seeded with six iconic destinations so the experience works
+before any API key is configured.
 
 ### The honesty contract
 
-The model is structurally constrained, not just prompted:
-
-- The response schema (enforced with structured outputs) has **no field**
-  for opening hours, prices, or open/closed status.
-- Every drive time is `number | null`. `null` renders as `?` — never as a
-  guessed number.
-- Every AI stop carries a confidence gauge and a "verify on map" link.
+- Response schemas have **no field** for prices, rates, or hours — the UI
+  links to live listings for real numbers.
+- Drive times are `number | null`; `null` renders as `?`, never a guess.
+- Whispers (traveler quotes) must carry the real URL they came from.
+- Photos come from Wikimedia, credited and linked; a place with no photo
+  says so instead of faking one.
 
 ## Deploying
 
-### Static-only (GitHub Pages, Netlify, any web server)
+1. Deploy to Vercel (static pages + the two `api/` functions are picked up
+   automatically; `@anthropic-ai/sdk` installs from `package.json`).
+2. Set `ANTHROPIC_API_KEY` to enable live research. Without it: seeded and
+   previously-researched storybooks, photos, day-splitting, Maps export,
+   saved trips, and all live-price links still work.
 
-Everything works except AI generation: manual stops, day-splitting,
-Google Maps export, save/load, `.json` download/import, share codes, and
-signup. The Forge button will explain that the AI proxy isn't deployed.
+## Supabase
 
-### With AI generation (Vercel or compatible)
+Project `lamdouidiiuqtplqhsdz` (all migrations applied; SQL kept in
+`supabase/migrations/` for reproduction):
 
-1. Deploy the repo to Vercel (the static pages and `api/forge.js` are
-   picked up automatically; `@anthropic-ai/sdk` installs from
-   `package.json`).
-2. Set the `ANTHROPIC_API_KEY` environment variable.
-
-That's it — the app calls `api/forge` first and only falls back to the
-direct path inside Claude artifacts.
-
-### Supabase
-
-The two tables live in project `lamdouidiiuqtplqhsdz` (already applied);
-`supabase/migrations/` holds the SQL for reproducing them elsewhere:
-
-- `routeforge_signups` — RLS: anon may **insert only** (with email format
-  checks); a unique index on `lower(email)` makes duplicate signups return
-  409, which the signup page turns into "you're already on the list".
-  Emails are never readable with the publishable key.
-- `routeforge_trips` — share codes. RLS: anon may **insert only**
-  (code-format + size checks). Reads happen exclusively through the
-  `routeforge_get_trip(share_code)` RPC, so the table can't be listed,
-  scraped, updated, or deleted with the publishable key. Codes are
-  crypto-random (`RF-` + 6 chars from an unambiguous alphabet).
+- `routeforge_signups` — insert-only RLS + unique `lower(email)`
+- `routeforge_trips` — share codes (insert-only, read via RPC)
+- `routeforge_places` — the brain (public read, insert-only, immutable)
 
 The publishable (`sb_publishable_…`) key in the HTML is designed to be
 public; RLS is the security boundary.
-
-## Design principles (the short version)
-
-- **Unknowns stay unknown.** `EST` marks a model estimate; `?` marks a gap.
-  We show the gap instead of filling it.
-- **Complement the giant.** Discovery, day logic, and persistence are ours;
-  turn-by-turn is Google Maps', exported in per-day links chunked under the
-  waypoint cap.
-- **The viral loop is never taxed.** Share codes are free for everyone.
-- **Your trips stay yours.** Everything exports to a plain `.json` file.
-
-The full competitive rationale is in the "Design ledger" at the bottom of
-the planner.

@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Storybook — RouteForge</title>
+<meta name="description" content="Every stop is its own storybook — real photos, real food, real adventures, sourced not invented.">
+<meta name="theme-color" content="#0E0C0A">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+<style>
+  :root{
+    --coal:#0E0C0A;--iron:#18140F;--ash:#2B241B;--seam:#3A3226;--smoke:#A89D8E;--bone:#EFE9DF;
+    --ember:#FF7A29;--molten:#FFB25E;--danger:#E5583E;--radius:14px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--coal);color:var(--bone);font-family:var(--sans);line-height:1.5;min-height:100vh}
+  a{color:inherit}
+  .wrap{max-width:720px;margin:0 auto;padding:0 16px}
+
+  /* top nav */
+  .topbar{position:fixed;inset:0 0 auto 0;z-index:30;display:flex;align-items:center;justify-content:space-between;
+    padding:12px 16px 10px;background:linear-gradient(180deg,rgba(10,8,6,.85),rgba(10,8,6,0));pointer-events:none}
+  .topbar a{pointer-events:auto;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--bone);text-decoration:none;background:rgba(14,12,10,.6);border:1px solid rgba(58,50,38,.7);
+    border-radius:9px;padding:8px 12px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  .topbar a:hover{color:var(--molten);border-color:var(--ember)}
+
+  /* scroll odometer — the little car drives as you read */
+  .road{position:fixed;left:0;right:0;top:0;height:4px;z-index:40;background:rgba(58,50,38,.55)}
+  .road::after{content:"";position:absolute;inset:1px 0;background-image:linear-gradient(90deg,var(--seam) 0 12px,transparent 12px 24px);background-size:24px 2px;background-repeat:repeat-x;background-position:0 center;opacity:.7}
+  .car{position:fixed;top:-7px;left:0;z-index:41;font-size:15px;transform:translateX(0);transition:transform .1s linear;filter:drop-shadow(0 0 6px rgba(255,122,41,.7))}
+
+  /* hero */
+  .hero{position:relative;min-height:72vh;display:flex;align-items:flex-end;overflow:hidden;background:radial-gradient(ellipse 90% 70% at 50% 0%, #1d150c, var(--coal))}
+  .hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1s ease;transform:scale(1.04);animation:kenburns 18s ease-in-out infinite alternate}
+  .hero-img.in{opacity:1}
+  @keyframes kenburns{from{transform:scale(1.04) translateY(0)}to{transform:scale(1.12) translateY(-2%)}}
+  .hero-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,12,10,.35) 0%,rgba(14,12,10,.05) 35%,rgba(14,12,10,.55) 70%,var(--coal) 100%)}
+  .hero-in{position:relative;width:100%;padding:96px 0 34px}
+  .hero-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--molten);margin-bottom:10px;text-shadow:0 1px 8px rgba(0,0,0,.8)}
+  .hero h1{font-size:clamp(40px,11vw,76px);font-weight:800;letter-spacing:-.045em;line-height:.98;text-shadow:0 2px 24px rgba(0,0,0,.75)}
+  .ticker{display:inline-flex;align-items:center;gap:9px;margin-top:14px;font-family:var(--mono);font-size:12px;letter-spacing:.05em;
+    color:var(--bone);background:rgba(14,12,10,.62);border:1px solid rgba(255,122,41,.45);border-radius:999px;padding:8px 14px;
+    -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  .ticker .blink{width:8px;height:8px;border-radius:50%;background:var(--ember);animation:pulse 1s infinite alternate}
+  @keyframes pulse{from{opacity:.25}to{opacity:1}}
+  .ticker b{color:var(--molten);font-weight:600}
+  .ticker .est{color:var(--smoke);border:1px solid var(--seam);border-radius:5px;padding:1px 5px;font-size:9px;letter-spacing:.14em}
+  .tagline{margin-top:14px;font-size:clamp(16px,3vw,20px);color:var(--bone);opacity:.95;max-width:34ch;font-weight:600;letter-spacing:-.01em;text-shadow:0 1px 12px rgba(0,0,0,.7)}
+  .hero-credit{font-family:var(--mono);font-size:10px;color:var(--smoke);letter-spacing:.06em;margin-top:16px;opacity:.8}
+  .hero-credit a{color:var(--smoke)}
+
+  /* story */
+  .story{font-size:clamp(16px,2.6vw,19px);line-height:1.65;color:var(--bone);opacity:.92;margin:26px 0 6px;max-width:58ch}
+  .story::first-letter{font-size:2.6em;font-weight:800;float:left;line-height:.9;padding:2px 8px 0 0;color:var(--ember)}
+
+  /* chapters */
+  .chapter{margin-top:44px}
+  .ch-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--ember)}
+  .ch-title{font-size:clamp(24px,5.5vw,34px);font-weight:800;letter-spacing:-.03em;margin-top:4px}
+  .ch-sub{color:var(--smoke);font-size:14px;margin-top:4px;max-width:52ch}
+  .ch-divider{height:4px;margin:14px 0 18px;position:relative;background:transparent}
+  .ch-divider::before{content:"";position:absolute;inset:1px 0;background-image:linear-gradient(90deg,var(--seam) 0 14px,transparent 14px 28px);background-size:28px 2px;background-repeat:repeat-x}
+  .ch-divider::after{content:"🚗";position:absolute;top:-11px;left:0;font-size:13px;opacity:.85}
+
+  /* gallery filmstrip */
+  .gallery{display:grid;grid-auto-flow:column;grid-auto-columns:72%;gap:10px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+  @media(min-width:640px){.gallery{grid-auto-columns:46%}}
+  .g-shot{scroll-snap-align:start;display:block;border-radius:14px;overflow:hidden;border:1px solid var(--seam);aspect-ratio:4/3;background:var(--iron);animation:ignite .5s ease both;position:relative}
+  .g-shot img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s ease}
+  .g-shot:hover img{transform:scale(1.05)}
+  @keyframes ignite{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .g-load,.g-none{font-family:var(--mono);font-size:11px;color:var(--smoke);padding:18px 0;letter-spacing:.06em;line-height:1.7}
+  .gallery-credit{font-family:var(--mono);font-size:10px;color:var(--seam);margin-top:8px;letter-spacing:.06em}
+
+  /* quick live links */
+  .quick{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px}
+  .ql{display:flex;align-items:center;gap:9px;background:var(--iron);border:1px solid var(--seam);border-radius:12px;padding:13px;color:var(--bone);text-decoration:none;font-size:13px;font-weight:600}
+  .ql:hover{border-color:var(--ember);color:var(--molten)}
+  .ql-ic{font-size:17px}
+  .ql-go{margin-left:auto;color:var(--ember);font-family:var(--mono)}
+  .price-note{font-family:var(--mono);font-size:10px;color:var(--smoke);border-left:2px solid var(--ember);padding-left:10px;margin-top:12px;line-height:1.7}
+
+  /* pick cards with photos */
+  .pk{display:grid;grid-template-columns:118px 1fr;gap:0;background:var(--iron);border:1px solid var(--ash);border-radius:14px;margin-bottom:10px;overflow:hidden;animation:ignite .5s ease both}
+  @media(min-width:560px){.pk{grid-template-columns:170px 1fr}}
+  .pk-photo{position:relative;background:var(--coal);min-height:104px}
+  .pk-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s ease}
+  .pk-photo img.in{opacity:1}
+  .pk-photo .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:26px}
+  .pk-photo .ph small{font-family:var(--mono);font-size:8px;letter-spacing:.12em;color:var(--seam);text-transform:uppercase;text-align:center;padding:0 8px;line-height:1.5}
+  .pk-body{padding:12px 13px 12px}
+  .pk-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .pk-name{font-size:15px;font-weight:750;letter-spacing:-.01em}
+  .pk-area{font-size:11px;color:var(--smoke);margin-top:1px}
+  .pk-why{font-size:13px;color:var(--bone);opacity:.85;margin-top:5px;line-height:1.45}
+  .pk-links{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
+  .pk-link{font-family:var(--mono);font-size:10px;color:var(--molten);text-decoration:none;border:1px solid #5c4326;border-radius:6px;padding:3px 9px;background:rgba(255,122,41,.06)}
+  .pk-link:hover{background:rgba(255,122,41,.14)}
+  .conf{display:inline-flex;gap:3px;align-items:center;flex:0 0 auto}
+  .dot{width:6px;height:6px;border-radius:50%;border:1px solid var(--ember)}
+  .dot.f{background:var(--ember)}
+  .picks-load,.picks-none{font-family:var(--mono);font-size:11px;color:var(--smoke);padding:8px 0 4px;line-height:1.8}
+
+  /* whispers */
+  .wh{background:var(--iron);border:1px solid var(--ash);border-left:3px solid var(--ember);border-radius:12px;padding:14px 15px;margin-bottom:10px;animation:ignite .5s ease both}
+  .wh q{font-size:14px;font-style:italic;color:var(--bone);opacity:.92;line-height:1.55;quotes:"“" "”"}
+  .wh .src{display:inline-block;margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--molten);text-decoration:none;border:1px solid #5c4326;border-radius:6px;padding:3px 8px;background:rgba(255,122,41,.06)}
+
+  /* provenance + honesty */
+  .prov{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--smoke);margin-top:22px;line-height:1.8}
+  .prov b{color:var(--molten);font-weight:600}
+  .honesty{font-family:var(--mono);font-size:11px;color:var(--smoke);border-left:2px solid var(--ember);padding-left:10px;margin:26px 0 0;line-height:1.7}
+
+  /* library rail */
+  .lib{display:grid;grid-auto-flow:column;grid-auto-columns:64%;gap:10px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+  @media(min-width:640px){.lib{grid-auto-columns:40%}}
+  .lib-card{scroll-snap-align:start;display:block;text-decoration:none;background:var(--iron);border:1px solid var(--ash);border-radius:14px;overflow:hidden;animation:ignite .5s ease both}
+  .lib-card:hover{border-color:var(--ember)}
+  .lib-photo{aspect-ratio:16/10;background:var(--coal);position:relative}
+  .lib-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s ease}
+  .lib-photo img.in{opacity:1}
+  .lib-photo .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:30px}
+  .lib-body{padding:11px 13px 13px}
+  .lib-name{font-size:15px;font-weight:750;letter-spacing:-.01em}
+  .lib-tag{font-size:12px;color:var(--smoke);margin-top:3px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .lib-go{font-family:var(--mono);font-size:10px;color:var(--ember);letter-spacing:.14em;text-transform:uppercase;margin-top:8px;display:block}
+
+  .foot{text-align:center;color:var(--smoke);font-family:var(--mono);font-size:11px;margin:40px 0 46px;letter-spacing:.08em;line-height:2}
+  .foot a{color:var(--smoke)}
+  .hidden{display:none}
+  main{padding-bottom:10px}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}.hero-img{transform:none}}
+</style>
+</head>
+<body>
+
+<div class="road" aria-hidden="true"></div>
+<div class="car" id="odoCar" aria-hidden="true">🚗</div>
+
+<div class="topbar">
+  <a href="#" id="backLink">← Back to route</a>
+  <a href="/">RouteForge</a>
+</div>
+
+<header class="hero" id="hero">
+  <img class="hero-img" id="heroImg" alt="">
+  <div class="hero-scrim"></div>
+  <div class="hero-in wrap">
+    <div class="hero-eyebrow" id="heroEyebrow">DESTINATION STORYBOOK</div>
+    <h1 id="placeName">…</h1>
+    <div class="ticker hidden" id="ticker"><span class="blink"></span><span id="tickerText"></span><span class="est">EST</span></div>
+    <p class="tagline" id="tagline"></p>
+    <div class="hero-credit" id="heroCredit"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="story" id="story"></p>
+
+  <section class="chapter" id="chGallery">
+    <div class="ch-eyebrow">Chapter 01</div>
+    <h2 class="ch-title">First look</h2>
+    <p class="ch-sub">Real photos of the real place — every frame links back to where it came from.</p>
+    <div class="ch-divider" aria-hidden="true"></div>
+    <div class="gallery" id="gallery"><div class="g-load">DEVELOPING THE FILM…</div></div>
+    <div class="gallery-credit" id="galleryCredit"></div>
+  </section>
+
+  <section class="chapter">
+    <div class="ch-eyebrow">Chapter 02</div>
+    <h2 class="ch-title">Go live — right now</h2>
+    <p class="ch-sub">These open real, current listings with real prices. Nothing here is guessed.</p>
+    <div class="ch-divider" aria-hidden="true"></div>
+    <div class="quick" id="quick"></div>
+    <p class="price-note">Prices &amp; hours live at the source — every button opens current listings. RouteForge never invents a number.</p>
+  </section>
+
+  <section class="chapter hidden" id="chEat">
+    <div class="ch-eyebrow">Chapter 03</div>
+    <h2 class="ch-title">Fuel up</h2>
+    <p class="ch-sub">The plates travelers actually talk about near this stop.</p>
+    <div class="ch-divider" aria-hidden="true"></div>
+    <div id="eatList"></div>
+  </section>
+
+  <section class="chapter hidden" id="chDo">
+    <div class="ch-eyebrow">Chapter 04</div>
+    <h2 class="ch-title">Get out of the car</h2>
+    <p class="ch-sub">The reasons your legs will forgive the drive.</p>
+    <div class="ch-divider" aria-hidden="true"></div>
+    <div id="doList"></div>
+  </section>
+
+  <section class="chapter hidden" id="chStay">
+    <div class="ch-eyebrow">Chapter 05</div>
+    <h2 class="ch-title">Crash for the night</h2>
+    <p class="ch-sub">Where the story pauses — rates open live so the numbers are always real.</p>
+    <div class="ch-divider" aria-hidden="true"></div>
+    <div id="stayList"></div>
+  </section>
+
+  <section class="chapter hidden" id="chWhisper">
+    <div class="ch-eyebrow">Chapter 06</div>
+    <h2 class="ch-title">What travelers whisper</h2>
+    <p class="ch-sub">Paraphrased from real threads — tap through to the source.</p>
+    <div class="ch-divider" aria-hidden="true"></div>
+    <div id="whisperList"></div>
+  </section>
+
+  <div class="picks-load" id="picksState"></div>
+  <p class="prov" id="prov"></p>
+
+  <section class="chapter" id="chLib">
+    <div class="ch-eyebrow">Keep going</div>
+    <h2 class="ch-title">More storybooks</h2>
+    <p class="ch-sub">Every route anyone researches teaches RouteForge a new place — the library never stops growing.</p>
+    <div class="ch-divider" aria-hidden="true"></div>
+    <div class="lib" id="lib"><div class="g-load">OPENING THE LIBRARY…</div></div>
+  </section>
+
+  <p class="honesty">Photos come from Wikimedia and link to their source pages. Curated picks are researched from Reddit, X, forums and the web — each carries a confidence gauge, and a place with no photo says so instead of faking one. <b style="color:var(--molten)">EST</b> = estimate. Prices are never invented; the links show you the live numbers.</p>
+
+  <p class="foot">ROUTEFORGE · SOURCED, NOT INVENTED · <a href="/app.html">PLAN A ROUTE</a></p>
+</main>
+
+<script>
+const SB_BASE="https://lamdouidiiuqtplqhsdz.supabase.co/rest/v1";
+const SB_KEY="sb_publishable_RrMGUSXa0vGBXTzQ4ueORg_IjTLFRv-";
+const SB_HEADERS={"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY};
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||"").toLowerCase().replace(/\s+/g," ").trim();
+const keyFor=(n,a)=>(norm(n)+"|"+norm(a)).slice(0,240);
+const mapsSearch=q=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q);
+const hotelsUrl=q=>"https://www.google.com/travel/search?q="+encodeURIComponent(q);
+const gSearch=q=>"https://www.google.com/search?q="+encodeURIComponent(q);
+
+/* ---------- params ---------- */
+const P=new URLSearchParams(location.search);
+const NAME=(P.get("name")||"").slice(0,120).trim();
+const AREA=(P.get("area")||"").slice(0,120).trim();
+const ETA=Math.max(0,Math.min(parseInt(P.get("eta"),10)||0,100000));
+const FROM=(P.get("from")||"").slice(0,120).trim();
+const RV=P.get("vehicle")==="rv";
+if(!NAME){ location.replace("/app.html"); }
+const WHERE=NAME+(AREA?", "+AREA:"");
+
+/* ---------- shell ---------- */
+document.title=NAME+" — a RouteForge storybook";
+$("placeName").textContent=NAME||"…";
+$("backLink").href="/app.html";
+$("backLink").addEventListener("click",e=>{ if(history.length>1){ e.preventDefault(); history.back(); } });
+if(ETA>0){
+  const h=Math.floor(ETA/60),m=ETA%60;
+  $("tickerText").innerHTML="~<b>"+(h?h+"h ":"")+(m?m+"m":(h?"":"0m"))+"</b> of “are we there yet?” left"+(FROM?" · from "+esc(FROM):"");
+  $("ticker").classList.remove("hidden");
+  $("heroEyebrow").textContent="NEXT STOP ON YOUR ROUTE";
+}else if(FROM){
+  $("heroEyebrow").textContent="THE DESTINATION · FROM "+FROM.toUpperCase().slice(0,40);
+}
+$("quick").innerHTML=quickLinks();
+
+function quickLinks(){
+  const stay = RV
+    ? ["🏕","RV parks & campgrounds", mapsSearch("RV parks and campgrounds near "+WHERE)]
+    : ["🛏","Places to stay & prices", hotelsUrl("hotels in "+WHERE)];
+  return [
+    ["🍽","Food & restaurants", mapsSearch("restaurants in "+WHERE)],
+    stay,
+    ["🎟","Things to do", mapsSearch("things to do in "+WHERE)],
+    ["📍","Open in Maps", mapsSearch(WHERE)]
+  ].map(a=>'<a class="ql" href="'+a[2]+'" target="_blank" rel="noopener"><span class="ql-ic">'+a[0]+'</span>'+esc(a[1])+'<span class="ql-go">↗</span></a>').join("");
+}
+
+/* ---------- odometer car ---------- */
+(function(){
+  const car=$("odoCar");
+  function move(){
+    const max=document.documentElement.scrollHeight-innerHeight;
+    const pct=max>0?Math.min(1,scrollY/max):0;
+    car.style.transform="translateX("+(pct*(innerWidth-26))+"px)";
+  }
+  addEventListener("scroll",move,{passive:true}); addEventListener("resize",move); move();
+})();
+
+/* ---------- wikimedia ---------- */
+async function wikiImages(q,limit,size){
+  const url="https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*"
+    +"&generator=search&gsrsearch="+encodeURIComponent(q)+"&gsrlimit="+(limit||6)
+    +"&prop=pageimages|info&inprop=url&piprop=thumbnail&pithumbsize="+(size||800);
+  try{
+    const r=await fetch(url); if(!r.ok) return [];
+    const j=await r.json();
+    const pages=j&&j.query&&j.query.pages; if(!pages) return [];
+    const seen=new Set(),out=[];
+    Object.values(pages).sort((a,b)=>(a.index||0)-(b.index||0)).forEach(p=>{
+      if(p.thumbnail&&p.thumbnail.source&&!seen.has(p.thumbnail.source)){
+        seen.add(p.thumbnail.source);
+        out.push({src:p.thumbnail.source,page:p.fullurl||null,title:p.title||q});
+      }
+    });
+    return out;
+  }catch(e){ return []; }
+}
+
+/* ---------- hero + gallery ---------- */
+(async function(){
+  const shots=await wikiImages(WHERE,8,1000);
+  if(shots.length){
+    const hero=shots[0];
+    const img=$("heroImg");
+    img.src=hero.src; img.alt=NAME;
+    img.onload=()=>img.classList.add("in");
+    $("heroCredit").innerHTML='PHOTO: WIKIMEDIA · <a href="'+esc(hero.page||"#")+'" target="_blank" rel="noopener">'+esc(hero.title)+'</a>';
+  }
+  const strip=shots.slice(1);
+  if(!strip.length&&!shots.length){
+    $("gallery").innerHTML='<div class="g-none">NO PHOTOS LISTED FOR THIS SPOT ON WIKIMEDIA.<br>GO TAKE THE FIRST ONE — THE VIEW IS ALL YOURS.</div>';
+    return;
+  }
+  const use=strip.length?strip:shots;
+  $("gallery").innerHTML=use.map((s,i)=>'<a class="g-shot" href="'+esc(s.page||"#")+'" target="_blank" rel="noopener" style="animation-delay:'+(i*70)+'ms"><img loading="lazy" alt="'+esc(s.title)+'" src="'+esc(s.src)+'"></a>').join("");
+  $("galleryCredit").textContent="PHOTOS: WIKIMEDIA — TAP ANY FRAME FOR ITS SOURCE PAGE";
+})();
+
+/* ---------- storybook data: /api/place → brain → links-only ---------- */
+const sPick=p=>({
+  name:String((p&&p.name)||"").slice(0,100),
+  area:String((p&&p.area)||"").slice(0,100),
+  why:String((p&&p.why)||"").slice(0,160),
+  confidence:["high","medium","low"].includes(p&&p.confidence)?p.confidence:"low"
+});
+const sWhisper=w=>({
+  quote:String((w&&w.quote)||"").slice(0,240),
+  source:String((w&&w.source)||"source").slice(0,60),
+  url:/^https?:\/\//.test(String((w&&w.url)||""))?String(w.url).slice(0,500):null
+});
+function sData(d){
+  d=d&&typeof d==="object"?d:{};
+  return {
+    tagline:String(d.tagline||"").slice(0,180),
+    story:String(d.story||"").slice(0,700),
+    eat:(Array.isArray(d.eat)?d.eat:[]).slice(0,6).map(sPick).filter(p=>p.name),
+    do:(Array.isArray(d.do)?d.do:[]).slice(0,6).map(sPick).filter(p=>p.name),
+    stay:(Array.isArray(d.stay)?d.stay:[]).slice(0,6).map(sPick).filter(p=>p.name),
+    whispers:(Array.isArray(d.whispers)?d.whispers:[]).slice(0,5).map(sWhisper).filter(w=>w.quote),
+    origin:d.origin==="seed"?"seed":"research"
+  };
+}
+
+async function brainGet(){
+  for(const k of [keyFor(NAME,AREA), keyFor(NAME,"")]){
+    try{
+      const r=await fetch(SB_BASE+"/routeforge_places?key=eq."+encodeURIComponent(k)+"&select=data,created_at&limit=1",{headers:SB_HEADERS});
+      if(!r.ok) continue;
+      const j=await r.json();
+      if(Array.isArray(j)&&j[0]&&j[0].data) return {data:j[0].data, at:j[0].created_at, via:"brain"};
+    }catch(e){}
+  }
+  return null;
+}
+
+(async function loadStory(){
+  $("picksState").textContent="READING THE THREADS — FOOD, ADVENTURES & PLACES TO CRASH LOADING…";
+  let got=null;
+  try{
+    const res=await fetch("/api/place",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({name:NAME,area:AREA,vehicle:RV?"rv":"car"})});
+    if(res.ok){
+      const j=await res.json();
+      got={data:j, at:j.researched_at||null, via:j.cached?"brain":"fresh"};
+    }else if(res.status!==503){ /* other errors: fall through to brain */ }
+  }catch(e){}
+  if(!got) got=await brainGet();
+  if(!got){
+    $("picksState").innerHTML="THIS STOP ISN'T IN THE BRAIN YET — the research engine needs its key. The live buttons in Chapter 02 already show real food, stays &amp; prices.";
+    $("prov").textContent="";
+    return;
+  }
+  const d=sData(got.data);
+  if(d.tagline) $("tagline").textContent=d.tagline;
+  if(d.story) $("story").textContent=d.story;
+  renderPicks("chEat","eatList",d.eat,"eat");
+  renderPicks("chDo","doList",d.do,"do");
+  renderPicks("chStay","stayList",d.stay,"stay");
+  renderWhispers(d.whispers);
+  $("picksState").textContent="";
+  $("prov").innerHTML= got.via==="fresh"
+    ? "<b>FRESHLY RESEARCHED</b> from Reddit, X, forums &amp; the web — and now locked into the RouteForge brain for every traveler after you."
+    : "<b>FROM THE ROUTEFORGE BRAIN</b> — researched once, remembered forever."+(got.at?" LEARNED "+esc(String(got.at).slice(0,10)):"");
+})();
+
+function confDots(c){
+  const n=c==="high"?3:c==="medium"?2:1;
+  let h='<span class="conf" title="how sure we are this place exists as described">';
+  for(let i=0;i<3;i++) h+='<span class="dot '+(i<n?"f":"")+'"></span>';
+  return h+"</span>";
+}
+const PH={eat:"🍽",do:"🎟",stay:"🛏"};
+
+function pickCard(p,kind,i){
+  const where=[p.name,p.area||AREA].filter(Boolean).join(", ");
+  let links='<a class="pk-link" href="'+mapsSearch(where)+'" target="_blank" rel="noopener">map ↗</a>';
+  if(kind==="stay") links+='<a class="pk-link" href="'+hotelsUrl(p.name+" "+(p.area||AREA||""))+'" target="_blank" rel="noopener">rates ↗</a>';
+  if(kind==="eat") links+='<a class="pk-link" href="'+gSearch(p.name+" "+(p.area||AREA)+" menu")+'" target="_blank" rel="noopener">menu ↗</a>';
+  return '<div class="pk" style="animation-delay:'+(i*70)+'ms">'
+    +'<div class="pk-photo" data-pkphoto="'+esc(p.name+"|"+(p.area||AREA))+'"><div class="ph">'+PH[kind]+'<small>looking for a photo…</small></div></div>'
+    +'<div class="pk-body"><div class="pk-top"><span class="pk-name">'+esc(p.name)+'</span>'+confDots(p.confidence)+'</div>'
+    +(p.area?'<div class="pk-area">'+esc(p.area)+'</div>':"")
+    +(p.why?'<div class="pk-why">'+esc(p.why)+'</div>':"")
+    +'<div class="pk-links">'+links+'</div></div></div>';
+}
+
+function renderPicks(chId,listId,arr,kind){
+  if(!arr.length) return;
+  $(chId).classList.remove("hidden");
+  $(listId).innerHTML=arr.map((p,i)=>pickCard(p,kind,i)).join("");
+  arr.forEach(p=>fillPickPhoto(p));
+}
+
+async function fillPickPhoto(p){
+  const sel='[data-pkphoto="'+CSS.escape(p.name+"|"+(p.area||AREA))+'"]';
+  const shots=await wikiImages(p.name+" "+(p.area||AREA),1,480);
+  const host=document.querySelector(sel);
+  if(!host) return;
+  if(!shots.length){
+    host.innerHTML='<div class="ph">'+ (host.innerHTML.includes("🍽")?"🍽":host.innerHTML.includes("🛏")?"🛏":"🎟") +'<small>no photo listed — go take the first one</small></div>';
+    return;
+  }
+  host.innerHTML='<img loading="lazy" alt="'+esc(p.name)+'" src="'+esc(shots[0].src)+'">';
+  const img=host.querySelector("img");
+  img.onload=()=>img.classList.add("in");
+  img.onerror=()=>{ host.innerHTML='<div class="ph">📷<small>no photo listed</small></div>'; };
+}
+
+function renderWhispers(ws){
+  if(!ws.length) return;
+  $("chWhisper").classList.remove("hidden");
+  $("whisperList").innerHTML=ws.map((w,i)=>'<div class="wh" style="animation-delay:'+(i*70)+'ms"><q>'+esc(w.quote)+'</q><br>'
+    +(w.url?'<a class="src" href="'+esc(w.url)+'" target="_blank" rel="noopener">'+esc(w.source)+' ↗</a>':'<span class="src" style="border-style:dashed">'+esc(w.source)+'</span>')
+    +'</div>').join("");
+}
+
+/* ---------- the growing library ---------- */
+(async function loadLibrary(){
+  try{
+    const r=await fetch(SB_BASE+"/routeforge_places?select=name,area,tagline:data->>tagline&order=created_at.desc&limit=9",{headers:SB_HEADERS});
+    if(!r.ok) throw 0;
+    const rows=(await r.json()).filter(x=>norm(x.name)!==norm(NAME)).slice(0,8);
+    if(!rows.length){ $("chLib").classList.add("hidden"); return; }
+    $("lib").innerHTML=rows.map((x,i)=>{
+      const q=new URLSearchParams({name:x.name}); if(x.area) q.set("area",x.area); if(RV) q.set("vehicle","rv");
+      return '<a class="lib-card" href="/place.html?'+esc(q.toString())+'" style="animation-delay:'+(i*60)+'ms">'
+        +'<div class="lib-photo" data-libphoto="'+esc(x.name)+'"><div class="ph">📖</div></div>'
+        +'<div class="lib-body"><div class="lib-name">'+esc(x.name)+'</div>'
+        +(x.tagline?'<div class="lib-tag">'+esc(x.tagline)+'</div>':"")
+        +'<span class="lib-go">Open storybook →</span></div></a>';
+    }).join("");
+    rows.forEach(async x=>{
+      const shots=await wikiImages(x.name+" "+(x.area||""),1,400);
+      const host=document.querySelector('[data-libphoto="'+CSS.escape(x.name)+'"]');
+      if(!host||!shots.length) return;
+      host.innerHTML='<img loading="lazy" alt="'+esc(x.name)+'" src="'+esc(shots[0].src)+'">';
+      const img=host.querySelector("img"); img.onload=()=>img.classList.add("in");
+    });
+  }catch(e){ $("chLib").classList.add("hidden"); }
+})();
+</script>
+</body>
+</html>
