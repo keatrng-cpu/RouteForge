@@ -12,7 +12,7 @@ into Google Maps. Every stop opens as its own **storybook page**.
 | --- | --- |
 | `index.html` | Marketing landing page |
 | `app.html` | The planner — research a route, split days, export to Maps |
-| `place.html` | A destination's **storybook**: hero photo, "are we there yet?" ticker, gallery, food / adventures / stays with photos, traveler whispers, live-price links, and the growing library |
+| `place.html` | A destination's **storybook**: hero photo, "are we there yet?" ticker, **live weather + golden-hour arrival timing**, gallery, food / adventures / stays with photos, traveler whispers, live-price links, **read-aloud narration**, **one-tap shareable postcard**, and the growing library |
 | `signup.html` | Email signup (Supabase-backed) |
 | `api/forge.js` | Route research (web search over Reddit/forums; sourced stops) |
 | `api/place.js` | Destination research — checks the brain first, researches on a miss, locks the result into the brain |
@@ -39,8 +39,12 @@ browser
   │        │      3) Wikimedia Commons  ─┘ token match — never an LLM URL)
   │        │      4) a real photo of the AREA, tagged "NEARBY · <town>"
   │        │      5) a "see real photos ↗" link to the venue on Maps
-  │        └── prices: live links out (Google Maps / Google Hotels) —
-  │                    never AI-generated numbers
+  │        ├── prices: live links out (Google Maps / Google Hotels) —
+  │        │          never AI-generated numbers
+  │        ├── weather + light: Open-Meteo forecast (keyless) + exact
+  │        │          sunrise/sunset/golden-hour astronomy computed in-browser
+  │        ├── narration: Web Speech reads the story aloud (keyless)
+  │        └── postcard: Canvas share card from the real verified photo
   └── signups ──► Supabase (insert-only, unique email)
 ```
 
@@ -65,6 +69,11 @@ before any API key is configured.
   nothing verified exists, the card links to the venue's real photos instead
   of faking one. Exact-business photos come from Google Places when a
   `GOOGLE_MAPS_API_KEY` is configured.
+- Weather is a real Open-Meteo **forecast**, labelled as a forecast (never a
+  promise) and only shown inside the 16-day window. Sunrise, sunset and
+  golden-hour times are **exact astronomy** (SunCalc algorithm) computed in
+  the browser for the date the traveler picks — real for any date, keyless,
+  never guessed.
 
 ## Deploying
 

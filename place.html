@@ -132,6 +132,46 @@
   .lib-tag{font-size:12px;color:var(--smoke);margin-top:3px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .lib-go{font-family:var(--mono);font-size:10px;color:var(--ember);letter-spacing:.14em;text-transform:uppercase;margin-top:8px;display:block}
 
+  /* actions row — listen + postcard */
+  .actions{display:flex;flex-wrap:wrap;gap:9px;margin:18px 0 2px}
+  .act{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--bone);background:var(--iron);border:1px solid var(--seam);border-radius:999px;padding:9px 15px;cursor:pointer;transition:border-color .18s,color .18s,background .18s}
+  .act:hover{border-color:var(--ember);color:var(--molten)}
+  .act.on{border-color:var(--ember);color:var(--coal);background:var(--ember);font-weight:600}
+  .act .ic{font-size:14px}
+  .act[disabled]{opacity:.45;cursor:default;pointer-events:none}
+  .act .bars{display:inline-flex;gap:2px;align-items:flex-end;height:12px}
+  .act .bars i{width:2px;height:5px;background:currentColor;border-radius:1px;animation:eq .9s ease-in-out infinite}
+  .act .bars i:nth-child(2){animation-delay:.15s}.act .bars i:nth-child(3){animation-delay:.3s}.act .bars i:nth-child(4){animation-delay:.45s}
+  @keyframes eq{0%,100%{height:4px}50%{height:12px}}
+
+  /* conditions & light band */
+  .cond{margin-top:26px;background:linear-gradient(180deg,var(--iron),rgba(24,20,15,.35));border:1px solid var(--ash);border-radius:16px;padding:16px 16px 15px;animation:ignite .5s ease both}
+  .cond-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .cond-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--ember)}
+  .cond-date{font-family:var(--mono);font-size:11px;color:var(--bone);background:var(--coal);border:1px solid var(--seam);border-radius:8px;padding:5px 9px;color-scheme:dark}
+  .cond-date::-webkit-calendar-picker-indicator{filter:invert(.7) sepia(1) saturate(5) hue-rotate(-12deg);cursor:pointer}
+  .cond-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:440px){.cond-grid{grid-template-columns:1fr}}
+  .cond-cell{background:var(--coal);border:1px solid var(--seam);border-radius:12px;padding:12px 13px;min-height:80px}
+  .cond-tag{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--smoke)}
+  .cond-tag b{color:var(--molten);font-weight:600}
+  .cond-main{display:flex;align-items:center;gap:11px;margin-top:7px}
+  .cond-emoji{font-size:27px;line-height:1}
+  .cond-temp{font-size:21px;font-weight:800;letter-spacing:-.02em}
+  .cond-temp small{font-size:13px;font-weight:600;color:var(--smoke)}
+  .cond-desc{font-size:12px;color:var(--smoke);margin-top:2px;line-height:1.4}
+  .cond-suns{display:flex;gap:18px;margin-top:8px}
+  .cond-suns .s{font-size:15px;font-weight:750;letter-spacing:-.01em}
+  .cond-suns .s small{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--smoke);font-weight:400;margin-top:2px}
+  .cond-golden{margin-top:12px;display:flex;gap:11px;align-items:flex-start;
+    background:radial-gradient(130% 150% at 0% 0%,rgba(255,178,94,.17),rgba(255,122,41,.04));
+    border:1px solid rgba(255,122,41,.35);border-radius:12px;padding:12px 13px}
+  .cond-golden .gic{font-size:20px;line-height:1.2}
+  .cond-golden .gtx{font-size:13.5px;line-height:1.5;color:var(--bone)}
+  .cond-golden .gtx b{color:var(--molten);font-weight:700}
+  .cond-note{font-family:var(--mono);font-size:10px;color:var(--smoke);margin-top:10px;letter-spacing:.03em;line-height:1.6}
+
   .foot{text-align:center;color:var(--smoke);font-family:var(--mono);font-size:11px;margin:40px 0 46px;letter-spacing:.08em;line-height:2}
   .foot a{color:var(--smoke)}
   .hidden{display:none}
@@ -163,6 +203,21 @@
 
 <main class="wrap">
   <p class="story" id="story"></p>
+
+  <div class="actions" id="actions" aria-label="Story actions"></div>
+
+  <section class="cond hidden" id="conditions">
+    <div class="cond-head">
+      <span class="cond-eyebrow">Conditions &amp; light</span>
+      <input type="date" id="condDate" class="cond-date" aria-label="Pick your arrival date">
+    </div>
+    <div class="cond-grid">
+      <div class="cond-cell" id="condWx"></div>
+      <div class="cond-cell" id="condSun"></div>
+    </div>
+    <div class="cond-golden hidden" id="condGolden"></div>
+    <div class="cond-note" id="condNote"></div>
+  </section>
 
   <section class="chapter" id="chGallery">
     <div class="ch-eyebrow">Chapter 01</div>
@@ -225,7 +280,7 @@
     <div class="lib" id="lib"><div class="g-load">OPENING THE LIBRARY…</div></div>
   </section>
 
-  <p class="honesty">Photos come from Wikimedia and link to their source pages. Curated picks are researched from Reddit, X, forums and the web — each carries a confidence gauge, and a place with no photo says so instead of faking one. <b style="color:var(--molten)">EST</b> = estimate. Prices are never invented; the links show you the live numbers.</p>
+  <p class="honesty">Photos come from Wikimedia and link to their source pages. Curated picks are researched from Reddit, X, forums and the web — each carries a confidence gauge, and a place with no photo says so instead of faking one. <b style="color:var(--molten)">EST</b> = estimate. Prices are never invented; the links show you the live numbers. Weather is a live <b style="color:var(--molten)">forecast</b> from Open-Meteo — a forecast, not a promise; sunrise, sunset and golden-hour times are exact astronomy for the date you pick.</p>
 
   <p class="foot">ROUTEFORGE · SOURCED, NOT INVENTED · <a href="/app.html">PLAN A ROUTE</a></p>
 </main>
@@ -372,10 +427,12 @@ async function placesImage(name,area){
 }
 
 /* ---------- hero + gallery ---------- */
+let HERO_SRC=null, HERO_TITLE=null;
 (async function(){
   const shots=await wikiImages(WHERE,10,1000,NAME,false);
   if(shots.length){
     const hero=shots[0];
+    HERO_SRC=hero.src; HERO_TITLE=hero.title||NAME;
     const img=$("heroImg");
     img.src=hero.src; img.alt=NAME;
     img.onload=()=>img.classList.add("in");
@@ -459,6 +516,184 @@ async function brainGet(){
     ? "<b>FRESHLY RESEARCHED</b> from Reddit, X, forums &amp; the web — and now locked into the RouteForge brain for every traveler after you."
     : "<b>FROM THE ROUTEFORGE BRAIN</b> — researched once, remembered forever."+(got.at?" LEARNED "+esc(String(got.at).slice(0,10)):"");
 })();
+
+/* ================= Living stops: weather + golden-hour light =================
+   All keyless, all real: geocoding + the day's forecast from Open-Meteo, and
+   sunrise/sunset/golden-hour computed with exact astronomy (SunCalc algorithm,
+   MIT) so the timing is honest for ANY date — never invented, never an LLM. */
+const SUN=(function(){
+  const rad=Math.PI/180, dayMs=864e5, J1970=2440588, J2000=2451545, e=rad*23.4397;
+  const toDays=d=>d.valueOf()/dayMs-0.5+J1970-J2000;
+  const M=d=>rad*(357.5291+0.98560028*d);
+  const L=m=>m+rad*(1.9148*Math.sin(m)+0.02*Math.sin(2*m)+0.0003*Math.sin(3*m))+rad*102.9372+Math.PI;
+  const dec=l=>Math.asin(Math.sin(e)*Math.sin(l));
+  const J0=0.0009;
+  const approx=(Ht,lw,n)=>J0+(Ht+lw)/(2*Math.PI)+n;
+  const transitJ=(ds,m,l)=>J2000+ds+0.0053*Math.sin(m)-0.0069*Math.sin(2*l);
+  const ha=(h,phi,d)=>Math.acos((Math.sin(h)-Math.sin(phi)*Math.sin(d))/(Math.cos(phi)*Math.cos(d)));
+  const fromJ=j=>new Date((j+0.5-J1970)*dayMs);
+  return function(date,lat,lng){
+    const lw=rad*-lng, phi=rad*lat, d=toDays(date), n=Math.round(d-J0-lw/(2*Math.PI));
+    const ds=approx(0,lw,n), m=M(ds), l=L(m), de=dec(l), Jnoon=transitJ(ds,m,l);
+    function evt(angle){
+      const w=ha(angle*rad,phi,de);
+      if(isNaN(w)) return {rise:new Date(NaN),set:new Date(NaN)};
+      const Jset=transitJ(approx(w,lw,n),m,l);
+      return {set:fromJ(Jset),rise:fromJ(Jnoon-(Jset-Jnoon))};
+    }
+    const s=evt(-0.833), g=evt(6);
+    return {sunrise:s.rise,sunset:s.set,goldenHourStart:g.set};
+  };
+})();
+function wxCode(code){
+  const m={0:['☀️','Clear sky'],1:['🌤️','Mainly clear'],2:['⛅','Partly cloudy'],3:['☁️','Overcast'],
+    45:['🌫️','Fog'],48:['🌫️','Rime fog'],51:['🌦️','Light drizzle'],53:['🌦️','Drizzle'],55:['🌧️','Heavy drizzle'],
+    56:['🌧️','Freezing drizzle'],57:['🌧️','Freezing drizzle'],61:['🌧️','Light rain'],63:['🌧️','Rain'],65:['🌧️','Heavy rain'],
+    66:['🌧️','Freezing rain'],67:['🌧️','Freezing rain'],71:['🌨️','Light snow'],73:['❄️','Snow'],75:['❄️','Heavy snow'],
+    77:['❄️','Snow grains'],80:['🌦️','Light showers'],81:['🌦️','Showers'],82:['⛈️','Violent showers'],
+    85:['🌨️','Snow showers'],86:['🌨️','Snow showers'],95:['⛈️','Thunderstorm'],96:['⛈️','Thunderstorm & hail'],99:['⛈️','Thunderstorm & hail']};
+  return m[code]||['🌡️','—'];
+}
+function fmtTime(d,tz){ try{ return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:tz}); }catch(e){ return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}); } }
+function fmtDate(ds){ const d=new Date(ds+'T12:00:00Z'); return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',timeZone:'UTC'}); }
+function todayISO(tz){ try{ return new Date().toLocaleDateString('en-CA',{timeZone:tz}); }catch(e){ return new Date().toLocaleDateString('en-CA'); } }
+
+async function geocode(){
+  const cand=[]; if(AREA) cand.push(AREA.split(',')[0].trim());
+  cand.push(NAME); if(AREA) cand.push(NAME+' '+AREA.split(',')[0].trim());
+  for(const q of cand){ if(!q) continue;
+    try{
+      const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&format=json&name='+encodeURIComponent(q));
+      if(!r.ok) continue; const j=await r.json(); const g=j&&j.results&&j.results[0];
+      if(g&&typeof g.latitude==='number') return {lat:g.latitude,lon:g.longitude,tz:g.timezone||null,label:[g.name,g.admin1].filter(Boolean).join(', ')};
+    }catch(e){}
+  }
+  return null;
+}
+function renderWx(ds,wx,tz){
+  const cell=$("condWx"), note=$("condNote");
+  if(wx){ const idx=wx.time.indexOf(ds);
+    if(idx>=0){
+      const [emo,txt]=wxCode(wx.weather_code[idx]);
+      const hi=Math.round(wx.temperature_2m_max[idx]), lo=Math.round(wx.temperature_2m_min[idx]);
+      cell.innerHTML='<div class="cond-tag">🌦 <b>Forecast</b> · '+esc(fmtDate(ds))+'</div>'
+        +'<div class="cond-main"><span class="cond-emoji">'+emo+'</span><span><span class="cond-temp">'+hi+'°<small> / '+lo+'°F</small></span><div class="cond-desc">'+esc(txt)+'</div></span></div>';
+      note.textContent='Live forecast via Open-Meteo — a forecast, not a promise. Sun & golden-hour times are exact astronomy.';
+      return;
+    }
+  }
+  cell.innerHTML='<div class="cond-tag">🌦 Weather</div><div class="cond-desc" style="margin-top:8px">A live forecast appears here within 16 days of your visit — the sun times stay exact for any date.</div>';
+  note.textContent='Sun & golden-hour times are exact astronomy for the date you pick.';
+}
+function renderSun(ds,geo,tz){
+  const cell=$("condSun"), gold=$("condGolden");
+  const t=SUN(new Date(ds+'T12:00:00Z'),geo.lat,geo.lon);
+  if(!t||isNaN(t.sunset)||isNaN(t.sunrise)){
+    cell.innerHTML='<div class="cond-tag">☀️ Sun</div><div class="cond-desc" style="margin-top:8px">The sun barely sets here on this date — endless golden light.</div>';
+    gold.classList.add('hidden'); return;
+  }
+  const rise=fmtTime(t.sunrise,tz), set=fmtTime(t.sunset,tz);
+  cell.innerHTML='<div class="cond-tag">☀️ Sun'+(geo.label?' · '+esc(geo.label):'')+'</div>'
+    +'<div class="cond-suns"><div class="s">'+esc(rise)+'<small>Sunrise</small></div><div class="s">'+esc(set)+'<small>Sunset</small></div></div>';
+  if(t.goldenHourStart&&!isNaN(t.goldenHourStart)){
+    const gh=fmtTime(t.goldenHourStart,tz), mins=Math.max(1,Math.round((t.sunset-t.goldenHourStart)/60000));
+    gold.innerHTML='<span class="gic">✨</span><span class="gtx">Chase the light: pull in by <b>'+esc(gh)+'</b> and you\'ll catch golden hour — about <b>'+mins+' minutes</b> of warm light before the sun sets at <b>'+esc(set)+'</b>.</span>';
+    gold.classList.remove('hidden');
+  }else gold.classList.add('hidden');
+}
+(async function initConditions(){
+  const geo=await geocode(); if(!geo) return;
+  let wx=null, tz=geo.tz;
+  try{
+    const r=await fetch('https://api.open-meteo.com/v1/forecast?timezone=auto&forecast_days=16&temperature_unit=fahrenheit&daily=weather_code,temperature_2m_max,temperature_2m_min&latitude='+geo.lat+'&longitude='+geo.lon);
+    if(r.ok){ const j=await r.json(); if(j&&j.daily&&Array.isArray(j.daily.time)){ wx=j.daily; if(j.timezone) tz=j.timezone; } }
+  }catch(e){}
+  if(!tz) tz=undefined;
+  $("conditions").classList.remove('hidden');
+  const dateEl=$("condDate"), today=todayISO(tz);
+  dateEl.value=today; dateEl.min=today;
+  const render=()=>{ const ds=dateEl.value||today; renderWx(ds,wx,tz); renderSun(ds,geo,tz); };
+  dateEl.addEventListener('change',render); render();
+})();
+
+/* ================= Read-aloud narration (Web Speech, keyless) ================= */
+function initNarration(host){
+  if(!('speechSynthesis' in window)||typeof SpeechSynthesisUtterance==='undefined') return;
+  const btn=document.createElement('button'); btn.className='act'; btn.type='button';
+  btn.innerHTML='<span class="ic">🔊</span><span class="lbl">Read me the story</span>';
+  let on=false;
+  const idle=()=>{ on=false; btn.classList.remove('on'); btn.querySelector('.ic').textContent='🔊'; btn.querySelector('.lbl').textContent='Read me the story'; };
+  const play=()=>{ on=true; btn.classList.add('on'); btn.querySelector('.ic').textContent='⏹'; btn.querySelector('.lbl').textContent='Stop'; };
+  btn.addEventListener('click',()=>{
+    if(on){ speechSynthesis.cancel(); idle(); return; }
+    const text=[NAME,$("tagline").textContent,$("story").textContent].filter(s=>s&&s.trim()).join('. ');
+    if(!text.trim()) return;
+    const u=new SpeechSynthesisUtterance(text); u.rate=.96; u.pitch=1; u.onend=idle; u.onerror=idle;
+    speechSynthesis.cancel(); speechSynthesis.speak(u); play();
+  });
+  addEventListener('beforeunload',()=>{ try{ speechSynthesis.cancel(); }catch(e){} });
+  host.appendChild(btn);
+}
+
+/* ================= One-tap shareable postcard (Canvas, keyless) =================
+   Built only from the REAL verified hero photo (or an honest ember gradient if
+   none) + the real tagline — never a faked image. */
+const PC_SANS='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+const slug=s=>String(s||'place').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'place';
+function loadCORS(src){ return new Promise((res,rej)=>{ const im=new Image(); im.crossOrigin='anonymous'; im.onload=()=>res(im); im.onerror=rej; im.src=src; }); }
+function wrapText(g,text,x,y,maxW,lh,maxLines){
+  const words=String(text).split(/\s+/); const lines=[]; let line='';
+  for(const w of words){ const t=line?line+' '+w:w;
+    if(g.measureText(t).width>maxW&&line){ lines.push(line); line=w; if(lines.length>=maxLines) break; } else line=t; }
+  if(lines.length<maxLines&&line) lines.push(line);
+  lines.slice(0,maxLines).forEach((l,i)=>g.fillText(l,x,y+i*lh));
+}
+async function makePostcard(btn){
+  const lbl=btn.querySelector('.lbl'), old=lbl.textContent;
+  lbl.textContent='Developing…'; btn.setAttribute('disabled','');
+  try{
+    const W=1200,H=800, c=document.createElement('canvas'); c.width=W; c.height=H;
+    const g=c.getContext('2d'); let drew=false;
+    if(HERO_SRC){ try{ const im=await loadCORS(HERO_SRC);
+      const s=Math.max(W/im.width,H/im.height), dw=im.width*s, dh=im.height*s;
+      g.drawImage(im,(W-dw)/2,(H-dh)/2,dw,dh); drew=true; }catch(e){ drew=false; } }
+    if(!drew){
+      const grad=g.createLinearGradient(0,0,W,H); grad.addColorStop(0,'#2a1c0f'); grad.addColorStop(1,'#0E0C0A');
+      g.fillStyle=grad; g.fillRect(0,0,W,H);
+      const rg=g.createRadialGradient(W*0.22,H*0.24,40,W*0.22,H*0.24,760);
+      rg.addColorStop(0,'rgba(255,122,41,.34)'); rg.addColorStop(1,'rgba(255,122,41,0)');
+      g.fillStyle=rg; g.fillRect(0,0,W,H);
+    }
+    const sc=g.createLinearGradient(0,H*0.32,0,H); sc.addColorStop(0,'rgba(14,12,10,0)'); sc.addColorStop(1,'rgba(14,12,10,.94)');
+    g.fillStyle=sc; g.fillRect(0,0,W,H);
+    g.strokeStyle='rgba(255,122,41,.85)'; g.lineWidth=6; g.strokeRect(26,26,W-52,H-52);
+    g.textBaseline='alphabetic';
+    g.fillStyle='#FFB25E'; g.font='700 24px ui-monospace,Menlo,Consolas,monospace';
+    g.fillText('ROUTEFORGE · A ROAD-TRIP STORYBOOK',60,H-262);
+    const name=(NAME||'').toUpperCase(); let fs=94; g.font='800 '+fs+'px '+PC_SANS;
+    while(g.measureText(name).width>W-120&&fs>42){ fs-=4; g.font='800 '+fs+'px '+PC_SANS; }
+    g.fillStyle='#EFE9DF'; g.fillText(name,60,H-166);
+    if(AREA){ g.fillStyle='#A89D8E'; g.font='600 30px '+PC_SANS; g.fillText(AREA,62,H-122); }
+    const tag=($("tagline").textContent||'').trim();
+    if(tag){ g.fillStyle='#EFE9DF'; g.font='500 31px '+PC_SANS; wrapText(g,tag,60,H-76,W-120,38,2); }
+    const blob=await new Promise(res=>c.toBlob(res,'image/png',.92)); if(!blob) throw new Error('noblob');
+    const file=new File([blob],slug(NAME)+'-routeforge.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file],title:NAME+' — RouteForge',text:tag||('A stop on my road trip: '+NAME)}); }catch(e){}
+    }else{
+      const url=URL.createObjectURL(blob), a=document.createElement('a');
+      a.href=url; a.download=file.name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),5000);
+    }
+  }catch(e){}
+  finally{ lbl.textContent=old; btn.removeAttribute('disabled'); }
+}
+function initPostcard(host){
+  const btn=document.createElement('button'); btn.className='act'; btn.type='button';
+  btn.innerHTML='<span class="ic">📮</span><span class="lbl">Make a postcard</span>';
+  btn.addEventListener('click',()=>makePostcard(btn)); host.appendChild(btn);
+}
+(function initActions(){ const host=$("actions"); if(!host) return; initNarration(host); initPostcard(host); })();
 
 function confDots(c){
   const n=c==="high"?3:c==="medium"?2:1;
