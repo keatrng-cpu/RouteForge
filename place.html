@@ -144,6 +144,15 @@
   .act .bars i{width:2px;height:5px;background:currentColor;border-radius:1px;animation:eq .9s ease-in-out infinite}
   .act .bars i:nth-child(2){animation-delay:.15s}.act .bars i:nth-child(3){animation-delay:.3s}.act .bars i:nth-child(4){animation-delay:.45s}
   @keyframes eq{0%,100%{height:4px}50%{height:12px}}
+  .act.stamped{border-color:var(--ember);color:var(--molten)}
+
+  /* confetti + toast (stamp collected) */
+  .confetti{position:fixed;z-index:60;width:9px;height:9px;border-radius:2px;pointer-events:none;will-change:transform,opacity;animation:conffall .95s ease-out forwards}
+  @keyframes conffall{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);z-index:61;background:var(--iron);border:1px solid var(--ember);
+    color:var(--bone);font-family:var(--mono);font-size:12px;letter-spacing:.04em;padding:11px 16px;border-radius:12px;opacity:0;
+    transition:opacity .25s ease,transform .25s ease;box-shadow:0 10px 34px rgba(0,0,0,.55);max-width:86vw;text-align:center}
+  .toast.in{opacity:1;transform:translateX(-50%) translateY(0)}
 
   /* conditions & light band */
   .cond{margin-top:26px;background:linear-gradient(180deg,var(--iron),rgba(24,20,15,.35));border:1px solid var(--ash);border-radius:16px;padding:16px 16px 15px;animation:ignite .5s ease both}
@@ -693,7 +702,44 @@ function initPostcard(host){
   btn.innerHTML='<span class="ic">📮</span><span class="lbl">Make a postcard</span>';
   btn.addEventListener('click',()=>makePostcard(btn)); host.appendChild(btn);
 }
-(function initActions(){ const host=$("actions"); if(!host) return; initNarration(host); initPostcard(host); })();
+
+/* ================= Trip passport — collect this stop's stamp ================= */
+const PASS_LS="routeforge.passport.v1";
+function passRead(){ try{ const a=JSON.parse(localStorage.getItem(PASS_LS)||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function passWrite(a){ try{ localStorage.setItem(PASS_LS,JSON.stringify(a.slice(-500))); return true; }catch(e){ return false; } }
+function passK(n,a){ return (String(n||"").toLowerCase().trim()+"|"+String(a||"").toLowerCase().trim()); }
+function passHas(n,a){ const k=passK(n,a); return passRead().some(s=>passK(s.name,s.area)===k); }
+function burstConfetti(anchor){
+  const r=anchor.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+  const cols=['#FF7A29','#FFB25E','#EFE9DF','#E5583E'];
+  for(let i=0;i<28;i++){ const d=document.createElement('div'); d.className='confetti';
+    d.style.left=cx+'px'; d.style.top=cy+'px'; d.style.background=cols[i%cols.length];
+    const ang=Math.random()*Math.PI*2, dist=44+Math.random()*96;
+    d.style.setProperty('--dx',(Math.cos(ang)*dist).toFixed(1)+'px');
+    d.style.setProperty('--dy',(Math.sin(ang)*dist-46).toFixed(1)+'px');
+    d.style.setProperty('--r',(Math.random()*560-280).toFixed(0)+'deg');
+    document.body.appendChild(d); setTimeout(()=>d.remove(),1000);
+  }
+}
+function toast(msg){
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('in'));
+  setTimeout(()=>{ t.classList.remove('in'); setTimeout(()=>t.remove(),320); },2400);
+}
+function initPassportBtn(host){
+  const btn=document.createElement('button'); btn.className='act'; btn.type='button';
+  const paint=on=>{ btn.classList.toggle('stamped',on); btn.innerHTML='<span class="ic">'+(on?'🎖':'🧭')+'</span><span class="lbl">'+(on?'In your passport':'Collect this stamp')+'</span>'; };
+  paint(passHas(NAME,AREA));
+  btn.addEventListener('click',()=>{
+    if(passHas(NAME,AREA)){ location.href='/app.html#passport'; return; }
+    const a=passRead(); a.push({name:NAME,area:AREA,at:new Date().toISOString().slice(0,10)}); passWrite(a);
+    paint(true); burstConfetti(btn);
+    const n=passRead().length;
+    toast('🎖 Stamp collected — '+n+(n===1?' stop':' stops')+' in your passport');
+  });
+  host.appendChild(btn);
+}
+(function initActions(){ const host=$("actions"); if(!host) return; initPassportBtn(host); initNarration(host); initPostcard(host); })();
 
 function confDots(c){
   const n=c==="high"?3:c==="medium"?2:1;

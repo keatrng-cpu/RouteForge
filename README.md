@@ -11,7 +11,7 @@ into Google Maps. Every stop opens as its own **storybook page**.
 | File | What it is |
 | --- | --- |
 | `index.html` | Marketing landing page |
-| `app.html` | The planner — research a route, split days, export to Maps |
+| `app.html` | The planner — research a route, split days, export to Maps, **per-stop golden-hour timing**, **state-line & halfway milestones**, and your **trip passport** |
 | `place.html` | A destination's **storybook**: hero photo, "are we there yet?" ticker, **live weather + golden-hour arrival timing**, gallery, food / adventures / stays with photos, traveler whispers, live-price links, **read-aloud narration**, **one-tap shareable postcard**, and the growing library |
 | `signup.html` | Email signup (Supabase-backed) |
 | `api/forge.js` | Route research (web search over Reddit/forums; sourced stops) |
@@ -74,6 +74,10 @@ before any API key is configured.
   golden-hour times are **exact astronomy** (SunCalc algorithm) computed in
   the browser for the date the traveler picks — real for any date, keyless,
   never guessed.
+- Route milestones are derived, not invented: state-line crossings come from
+  parsing each stop's own area text, and the halfway marker from the
+  estimated drive times (labelled as an estimate). The trip passport is the
+  traveler's own collection, stored locally in their browser.
 
 ## Deploying
 

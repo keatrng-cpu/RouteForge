@@ -108,6 +108,39 @@
   .slist{margin-top:12px}
   .slist a{display:block;font-size:12px;color:var(--smoke);text-decoration:none;padding:6px 0;border-bottom:1px solid var(--ash);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .slist a:hover{color:var(--molten)}
+  /* trip start-date control */
+  .triptime{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 14px;font-family:var(--mono);font-size:11px;color:var(--smoke)}
+  .tt-label{color:var(--molten);letter-spacing:.1em;text-transform:uppercase}
+  .tt-note{letter-spacing:.02em}
+  .date-in{background:var(--coal);border:1px solid var(--seam);border-radius:9px;color:var(--bone);padding:7px 9px;font-family:var(--mono);font-size:12px;color-scheme:dark}
+  .date-in::-webkit-calendar-picker-indicator{filter:invert(.7) sepia(1) saturate(5) hue-rotate(-12deg);cursor:pointer}
+  /* per-stop golden-hour light (only shown once geocoded — never faked) */
+  .light{margin-top:9px;font-family:var(--mono);font-size:11px;color:var(--smoke);letter-spacing:.03em;display:none}
+  .light.on{display:block}
+  .light b{color:var(--molten);font-weight:600}
+  .light .li-ic{margin-right:5px}
+  .dest-card .light{margin-top:8px}
+  /* milestone markers (state lines, halfway) — from real data */
+  .milestone{position:relative;margin:2px 0 12px;padding:8px 12px;font-family:var(--mono);font-size:11px;letter-spacing:.07em;
+    color:var(--molten);background:rgba(255,122,41,.07);border:1px dashed rgba(255,122,41,.5);border-radius:10px}
+  .milestone::before{content:"";position:absolute;left:-28px;top:11px;width:12px;height:12px;background:var(--iron);border:2px solid var(--molten);transform:rotate(45deg)}
+  .milestone.half{color:var(--bone);border-color:var(--molten)}
+  .mnote{color:var(--smoke);letter-spacing:0;text-transform:none}
+  /* trip passport */
+  .pass-empty{text-align:center;color:var(--smoke);padding:20px 12px;border:1px dashed var(--seam);border-radius:12px;font-size:13px;line-height:1.6}
+  .pass-empty b{color:var(--molten)}
+  .stamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:10px}
+  .stamp{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--bone);
+    background:radial-gradient(120% 120% at 50% 0%,rgba(255,122,41,.07),var(--coal));border:1px dashed #6b4d2c;border-radius:12px;
+    padding:12px 8px 10px;transform:rotate(var(--rot,0deg));transition:transform .16s ease,border-color .16s ease;animation:ignite .5s ease both}
+  .stamp:hover{transform:rotate(0) translateY(-2px);border-color:var(--ember)}
+  .st-ring{width:44px;height:44px;border-radius:50%;border:2px solid var(--ember);display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-weight:700;color:var(--molten);font-size:15px;box-shadow:inset 0 0 0 3px rgba(255,122,41,.12)}
+  .st-name{font-size:12px;font-weight:700;text-align:center;line-height:1.2;letter-spacing:-.01em}
+  .st-area{font-size:10px;color:var(--smoke);text-align:center;line-height:1.2}
+  .st-date{font-family:var(--mono);font-size:9px;color:var(--ember);letter-spacing:.08em;margin-top:1px}
+  #passTier{color:var(--molten);letter-spacing:0;text-transform:none;font-family:var(--sans);font-weight:600}
+
   .foot{text-align:center;color:var(--smoke);font-family:var(--mono);font-size:11px;margin-top:28px;letter-spacing:.08em}
   .foot a{color:var(--smoke)}
   .hidden{display:none}
@@ -168,6 +201,11 @@
 
   <section class="card" aria-label="Itinerary">
     <h2>Itinerary <span id="tripTitle" style="color:var(--bone);letter-spacing:0;text-transform:none"></span></h2>
+    <div class="triptime hidden" id="tripTime">
+      <span class="tt-label">🗓 Leaving</span>
+      <input type="date" id="leaveDate" class="date-in" aria-label="Trip start date">
+      <span class="tt-note">sets each day's date, light &amp; sunset</span>
+    </div>
     <div id="railHost">
       <div class="empty">No route yet. Set your endpoints above — we'll dig through Reddit, forums and trip reports for the stops worth pulling over for.</div>
     </div>
@@ -179,6 +217,11 @@
       <input type="text" id="manualName" placeholder="Add your own stop…">
       <button class="btn-mini" id="addManual" style="flex:0 0 auto">Add stop</button>
     </div>
+  </section>
+
+  <section class="card" id="passportCard" aria-label="Trip passport">
+    <h2>Your passport <span id="passTier"></span></h2>
+    <div id="passBody"></div>
   </section>
 
   <section class="card hidden" id="researchCard" aria-label="Research log">
@@ -353,12 +396,21 @@ function render(){
   }
   $("tripTitle").textContent="· "+(S.trip.name||"");
   $("honesty").style.display="block";
+  $("tripTime").classList.remove("hidden");
+  if($("leaveDate")&&!$("leaveDate").value){ try{ $("leaveDate").value=new Date().toLocaleDateString('en-CA'); }catch(e){} }
   const days=splitDays();
+  // milestones from real data: state-line crossings + drive-time halfway
+  const flat=S.trip.stops;
+  const seqSt=[S.trip.start||"",...flat.map(s=>s.area||s.name||""),S.trip.end||""].map(stateOf);
+  const crossBefore=p=>{ const a=seqSt[p],b=seqSt[p+1]; return (a&&b&&a!==b)?b:null; };
+  const legs=flat.map(s=>s.drive==null?UNKNOWN_LEG:s.drive), total=legs.reduce((a,b)=>a+b,0), anyUnk=flat.some(s=>s.drive==null);
+  let halfAfter=-1; if(flat.length>1&&total>0){ let run=0; for(let p=0;p<legs.length;p++){ run+=legs[p]; if(run>=total/2){ halfAfter=p; break; } } }
   let html='<div class="rail">',idx=0;
   days.forEach((d,di)=>{
     const h=Math.floor(d.mins/60),m=d.mins%60;
     html+='<div class="daybreak">Day '+(di+1)+'<span class="dsum">~'+h+'h'+(m?" "+m+"m":"")+' driving'+(d.unknown?" · includes unconfirmed legs (?)":"")+'</span></div>';
     d.stops.forEach(st=>{
+      const cx=crossBefore(idx); if(cx) html+='<div class="milestone">🪧 Crossing into <b>'+esc(fullState(cx))+'</b></div>';
       const leg=st.drive!=null?'<span class="tag est">EST '+st.drive+' min drive</span>':'<span class="tag unk">? drive time unconfirmed</span>';
       const det=st.detour!=null?'<span class="tag est">+'+st.detour+' min detour</span>':"";
       const ev=st.evidence||[];
@@ -376,27 +428,34 @@ function render(){
           +leg+det
           +'<a class="verify" target="_blank" rel="noopener" href="'+mapsSearch(st.name+" "+(st.area||""))+'">verify on map</a>'
         +'</div>'
+        +'<div class="light" data-light="'+st.id+'"></div>'
         +(S.trip.vehicle==="rv"?'<div class="rv-note">RV advisory: confirm clearance &amp; big-rig parking before committing.</div>':"")
         +'<div class="stop-actions">'
           +'<button data-a="up" data-id="'+st.id+'" aria-label="Move up">▲</button>'
           +'<button data-a="down" data-id="'+st.id+'" aria-label="Move down">▼</button>'
           +'<button data-a="del" data-id="'+st.id+'" aria-label="Remove">Remove</button>'
         +'</div></div>';
+      if(idx===halfAfter&&flat.length>1) html+='<div class="milestone half">🏁 About halfway to <b>'+esc(S.trip.end||"the destination")+'</b>'+(anyUnk?' <span class="mnote">(by estimated drive time)</span>':'')+'</div>';
       idx++;
     });
   });
   if(S.trip.end){
     const lastStop=S.trip.stops[S.trip.stops.length-1];
     const from=lastStop?lastStop.name:(S.trip.start||"");
+    const dcx=crossBefore(flat.length);
+    if(dcx) html+='<div class="milestone">🪧 Crossing into <b>'+esc(fullState(dcx))+'</b></div>';
     html+='<div class="daybreak">Final chapter</div>'
       +'<a class="dest-card" href="'+esc(storybookURL(S.trip.end,"",null,from))+'">'+esc(S.trip.end)
-      +'<span class="dest-go">Open the destination storybook ↗</span></a>';
+      +'<span class="dest-go">Open the destination storybook ↗</span>'
+      +'<div class="light" data-light="__dest"></div></a>';
   }
   html+="</div>";
   host.innerHTML=html;
   host.querySelectorAll("button[data-a]").forEach(b=>b.addEventListener("click",onStopAction));
   host.querySelectorAll("button[data-explore]").forEach(b=>b.addEventListener("click",onExplore));
   S.trip.stops.forEach(st=>{ if(st.photo!==undefined) paintPhoto(st); });
+  days.forEach((d,di)=>d.stops.forEach(st=>paintLight(st,di)));
+  if(S.trip.end) paintLight({id:"__dest",name:S.trip.end,area:""},days.length-1);
   renderExport(days);
 }
 
@@ -406,6 +465,92 @@ function onExplore(e){
   const i=S.trip.stops.indexOf(st);
   const from=i>0?S.trip.stops[i-1].name:(S.trip.start||"");
   location.href=storybookURL(st.name, st.area||"", st.drive!=null?st.drive:null, from);
+}
+
+/* ===== Golden-hour light on the rail: exact sunrise/sunset astronomy (SunCalc,
+   MIT) + keyless Open-Meteo geocoding. Real for any date, never invented. ===== */
+const SUN=(function(){
+  const rad=Math.PI/180, dayMs=864e5, J1970=2440588, J2000=2451545, e=rad*23.4397;
+  const toDays=d=>d.valueOf()/dayMs-0.5+J1970-J2000;
+  const M=d=>rad*(357.5291+0.98560028*d);
+  const L=m=>m+rad*(1.9148*Math.sin(m)+0.02*Math.sin(2*m)+0.0003*Math.sin(3*m))+rad*102.9372+Math.PI;
+  const dec=l=>Math.asin(Math.sin(e)*Math.sin(l));
+  const J0=0.0009, approx=(Ht,lw,n)=>J0+(Ht+lw)/(2*Math.PI)+n;
+  const transitJ=(ds,m,l)=>J2000+ds+0.0053*Math.sin(m)-0.0069*Math.sin(2*l);
+  const ha=(h,phi,d)=>Math.acos((Math.sin(h)-Math.sin(phi)*Math.sin(d))/(Math.cos(phi)*Math.cos(d)));
+  const fromJ=j=>new Date((j+0.5-J1970)*dayMs);
+  return function(date,lat,lng){
+    const lw=rad*-lng, phi=rad*lat, d=toDays(date), n=Math.round(d-J0-lw/(2*Math.PI));
+    const ds=approx(0,lw,n), m=M(ds), l=L(m), de=dec(l), Jnoon=transitJ(ds,m,l);
+    function evt(a){ const w=ha(a*rad,phi,de); if(isNaN(w)) return {rise:new Date(NaN),set:new Date(NaN)};
+      const Jset=transitJ(approx(w,lw,n),m,l); return {set:fromJ(Jset),rise:fromJ(Jnoon-(Jset-Jnoon))}; }
+    const s=evt(-0.833), g=evt(6);
+    return {sunrise:s.rise,sunset:s.set,goldenHourStart:g.set};
+  };
+})();
+function fmtTime(d,tz){ try{ return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:tz}); }catch(e){ return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}); } }
+function dateForDay(di){
+  let base; try{ base=($("leaveDate")&&$("leaveDate").value)||new Date().toLocaleDateString('en-CA'); }catch(e){ base=new Date().toLocaleDateString('en-CA'); }
+  const d=new Date(base+'T12:00:00Z'); if(isNaN(d)) return null; d.setUTCDate(d.getUTCDate()+(di||0));
+  return {iso:d.toISOString().slice(0,10), label:d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',timeZone:'UTC'})};
+}
+const GEO=new Map();
+function geocodeQuery(q){
+  q=String(q||'').split(',')[0].trim(); if(!q) return Promise.resolve(null);
+  if(GEO.has(q)) return GEO.get(q);
+  const p=(async()=>{ try{
+    const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&format=json&name='+encodeURIComponent(q));
+    if(!r.ok) return null; const j=await r.json(); const g=j&&j.results&&j.results[0];
+    return (g&&typeof g.latitude==='number')?{lat:g.latitude,lon:g.longitude,tz:g.timezone||undefined}:null;
+  }catch(e){ return null; } })();
+  GEO.set(q,p); return p;
+}
+async function paintLight(st,di){
+  const host=document.querySelector('[data-light="'+(st.id||'')+'"]'); if(!host) return;
+  const dt=dateForDay(di); if(!dt) return;
+  const geo=await geocodeQuery(st.area||st.name); if(!geo) return;         // no location → stay blank, never faked
+  const t=SUN(new Date(dt.iso+'T12:00:00Z'),geo.lat,geo.lon);
+  if(!t||isNaN(t.sunset)) return;
+  const gh=(t.goldenHourStart&&!isNaN(t.goldenHourStart))?fmtTime(t.goldenHourStart,geo.tz):null;
+  host.innerHTML='<span class="li-ic">🌅</span>'+esc(dt.label)+(gh?' · golden hour <b>'+esc(gh)+'</b>':'')+' · sunset <b>'+esc(fmtTime(t.sunset,geo.tz))+'</b>';
+  host.classList.add('on');
+}
+
+/* ===== US state parsing for milestone crossings (deterministic, from the
+   stop's own area text — never guessed) ===== */
+const STATE_NAMES={alabama:'AL',alaska:'AK',arizona:'AZ',arkansas:'AR',california:'CA',colorado:'CO',connecticut:'CT',delaware:'DE','district of columbia':'DC',florida:'FL',georgia:'GA',hawaii:'HI',idaho:'ID',illinois:'IL',indiana:'IN',iowa:'IA',kansas:'KS',kentucky:'KY',louisiana:'LA',maine:'ME',maryland:'MD',massachusetts:'MA',michigan:'MI',minnesota:'MN',mississippi:'MS',missouri:'MO',montana:'MT',nebraska:'NE',nevada:'NV','new hampshire':'NH','new jersey':'NJ','new mexico':'NM','new york':'NY','north carolina':'NC','north dakota':'ND',ohio:'OH',oklahoma:'OK',oregon:'OR',pennsylvania:'PA','rhode island':'RI','south carolina':'SC','south dakota':'SD',tennessee:'TN',texas:'TX',utah:'UT',vermont:'VT',virginia:'VA',washington:'WA','west virginia':'WV',wisconsin:'WI',wyoming:'WY'};
+const STATE_FULL=Object.fromEntries(Object.entries(STATE_NAMES).map(([k,v])=>[v,k.replace(/\b\w/g,c=>c.toUpperCase())]));
+const STATE_ABBR=new Set(Object.values(STATE_NAMES));
+function stateOf(txt){
+  if(!txt) return null;
+  const parts=String(txt).split(',').map(s=>s.trim()).filter(Boolean);
+  for(let i=parts.length-1;i>=0;i--){ const p=parts[i];
+    const first=p.split(/\s+/)[0].toUpperCase();
+    if(p.length<=3 && STATE_ABBR.has(p.toUpperCase())) return p.toUpperCase();
+    if(STATE_NAMES[p.toLowerCase()]) return STATE_NAMES[p.toLowerCase()];
+    if(STATE_ABBR.has(first)&&p.length<=3) return first;
+  }
+  return null;
+}
+function fullState(ab){ return STATE_FULL[ab]||ab; }
+
+/* ===== Trip passport (the traveler's own collection, stored locally) ===== */
+const PASS_LS="routeforge.passport.v1";
+function passRead(){ try{ const a=JSON.parse(localStorage.getItem(PASS_LS)||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function passInitials(n){ return String(n||"?").split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toUpperCase()||"?"; }
+function passTier(n){ return n>=20?"Highway legend":n>=10?"Road warrior":n>=6?"Seasoned road-tripper":n>=3?"Weekend wanderer":n>=1?"Just rolling out":""; }
+function passURL(n,a){ return "/place.html?name="+encodeURIComponent(n)+(a?"&area="+encodeURIComponent(a):""); }
+function renderPassport(){
+  const card=$("passportCard"); if(!card) return;
+  const a=passRead();
+  $("passTier").textContent=a.length?("· "+passTier(a.length)+" · "+a.length+(a.length===1?" stamp":" stamps")):"";
+  if(!a.length){ $("passBody").innerHTML='<div class="pass-empty">No stamps yet. Open any stop’s storybook and tap <b>Collect this stamp</b> — your road-trip passport fills up right here.</div>'; return; }
+  $("passBody").innerHTML='<div class="stamps">'+a.slice().reverse().map((s,i)=>
+    '<a class="stamp" style="--rot:'+(((i*5)%9)-4)+'deg;animation-delay:'+Math.min(i*50,500)+'ms" href="'+esc(passURL(s.name,s.area))+'">'
+    +'<span class="st-ring">'+esc(passInitials(s.name))+'</span>'
+    +'<span class="st-name">'+esc(s.name)+'</span>'
+    +(s.area?'<span class="st-area">'+esc(s.area)+'</span>':'')
+    +(s.at?'<span class="st-date">'+esc(s.at)+'</span>':'')+'</a>').join('')+'</div>';
 }
 
 function renderResearch(){
@@ -507,7 +652,9 @@ $("manualName").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDe
 $("saveBtn").onclick=saveTrip;
 $("loadBtn").onclick=loadTrip;
 $("shareBtn").onclick=copyTrip;
+$("leaveDate").addEventListener("change",()=>{ if(S.trip.stops.length) render(); });
 refreshTripList();
+renderPassport();
 </script>
 </body>
 </html>
