@@ -3,260 +3,167 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RouteForge — road trips, forged honestly</title>
+<title>The planner — RouteForge</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
 <style>
   :root{
-    --coal:#0E0C0A;
-    --iron:#18140F;
-    --ash:#2B241B;
-    --seam:#3A3226;
-    --smoke:#A89D8E;
-    --bone:#EFE9DF;
-    --ember:#FF7A29;
-    --molten:#FFB25E;
-    --danger:#E5583E;
-    --rail-w:3px;
-    --radius:14px;
+    --coal:#0E0C0A;--iron:#18140F;--ash:#2B241B;--seam:#3A3226;--smoke:#A89D8E;--bone:#EFE9DF;
+    --ember:#FF7A29;--molten:#FFB25E;--danger:#E5583E;--radius:14px;
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html{-webkit-text-size-adjust:100%}
-  body{
-    background:var(--coal);
-    color:var(--bone);
-    font-family:var(--sans);
-    line-height:1.5;
-    min-height:100vh;
-    background-image:radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255,122,41,.08), transparent);
-  }
+  body{background:var(--coal);color:var(--bone);font-family:var(--sans);line-height:1.5;min-height:100vh;
+    background-image:radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255,122,41,.08), transparent);}
   .wrap{max-width:680px;margin:0 auto;padding:20px 16px 96px}
-
-  /* ---------- header ---------- */
   header{padding:18px 0 26px}
-  .eyebrow{
-    font-family:var(--mono);
-    font-size:11px;
-    letter-spacing:.22em;
-    text-transform:uppercase;
-    color:var(--ember);
-    margin-bottom:10px;
-  }
-  h1{
-    font-size:clamp(34px,9vw,52px);
-    font-weight:800;
-    letter-spacing:-.04em;
-    line-height:1.02;
-  }
-  h1 .lit{
-    background:linear-gradient(100deg,var(--ember),var(--molten));
-    -webkit-background-clip:text;background-clip:text;
-    -webkit-text-fill-color:transparent;color:transparent;
-  }
-  .sub{color:var(--smoke);margin-top:10px;font-size:15px;max-width:46ch}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ember);margin-bottom:10px}
+  .eyebrow a{color:var(--ember);text-decoration:none}
+  h1{font-size:clamp(34px,9vw,52px);font-weight:800;letter-spacing:-.04em;line-height:1.02}
+  h1 .lit{background:linear-gradient(100deg,var(--ember),var(--molten));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+  .sub{color:var(--smoke);margin-top:10px;font-size:15px;max-width:48ch}
   .sub b{color:var(--bone);font-weight:600}
-
-  /* ---------- cards ---------- */
-  .card{
-    background:var(--iron);
-    border:1px solid var(--ash);
-    border-radius:var(--radius);
-    padding:18px;
-    margin-bottom:16px;
-  }
-  .card h2{
-    font-size:13px;font-family:var(--mono);
-    letter-spacing:.18em;text-transform:uppercase;
-    color:var(--smoke);margin-bottom:14px;font-weight:500;
-  }
-  label{
-    display:block;font-size:12px;color:var(--smoke);
-    margin:12px 0 5px;font-family:var(--mono);
-    letter-spacing:.06em;text-transform:uppercase;
-  }
+  .card{background:var(--iron);border:1px solid var(--ash);border-radius:var(--radius);padding:18px;margin-bottom:16px}
+  .card h2{font-size:13px;font-family:var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--smoke);margin-bottom:14px;font-weight:500}
+  label{display:block;font-size:12px;color:var(--smoke);margin:12px 0 5px;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase}
   label:first-of-type{margin-top:0}
-  input[type=text],textarea,select{
-    width:100%;background:var(--coal);
-    border:1px solid var(--seam);border-radius:10px;
-    color:var(--bone);padding:12px 13px;font-size:16px;
-    font-family:var(--sans);
-  }
-  input:focus,textarea:focus,select:focus,button:focus-visible{
-    outline:2px solid var(--ember);outline-offset:2px;
-  }
+  input[type=text],select{width:100%;background:var(--coal);border:1px solid var(--seam);border-radius:10px;color:var(--bone);padding:12px 13px;font-size:16px;font-family:var(--sans)}
+  input:focus,select:focus,button:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
   .row{display:flex;gap:10px}
   .row>*{flex:1;min-width:0}
-
-  /* segmented control */
   .seg{display:flex;background:var(--coal);border:1px solid var(--seam);border-radius:10px;overflow:hidden}
-  .seg button{
-    flex:1;background:none;border:0;color:var(--smoke);
-    padding:11px 4px;font-size:14px;cursor:pointer;font-family:var(--sans);
-  }
+  .seg button{flex:1;background:none;border:0;color:var(--smoke);padding:11px 4px;font-size:14px;cursor:pointer;font-family:var(--sans)}
   .seg button.on{background:var(--ash);color:var(--bone);font-weight:600}
-
-  /* slider */
   .slider-line{display:flex;align-items:center;gap:12px}
   input[type=range]{flex:1;accent-color:var(--ember);height:32px}
   .slider-val{font-family:var(--mono);font-size:14px;color:var(--molten);min-width:56px;text-align:right}
-
   .check{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:14px;color:var(--smoke)}
   .check input{width:18px;height:18px;accent-color:var(--ember)}
-
-  /* buttons */
-  .btn{
-    display:inline-flex;align-items:center;justify-content:center;gap:8px;
-    border:0;border-radius:11px;cursor:pointer;
-    font-size:15px;font-weight:600;font-family:var(--sans);
-    padding:14px 18px;width:100%;margin-top:16px;
-    transition:transform .08s ease;
-  }
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:11px;cursor:pointer;font-size:15px;font-weight:600;font-family:var(--sans);padding:14px 18px;width:100%;margin-top:16px;transition:transform .08s ease}
   .btn:active{transform:scale(.985)}
-  .btn-primary{
-    background:linear-gradient(100deg,var(--ember),var(--molten));
-    color:#1A0E04;
-  }
-  .btn-ghost{
-    background:var(--coal);color:var(--bone);
-    border:1px solid var(--seam);
-  }
-  .btn-mini{
-    width:auto;padding:8px 12px;font-size:13px;margin:0;
-    background:var(--coal);color:var(--smoke);border:1px solid var(--seam);border-radius:9px;
-  }
+  .btn-primary{background:linear-gradient(100deg,var(--ember),var(--molten));color:#1A0E04}
+  .btn-ghost{background:var(--coal);color:var(--bone);border:1px solid var(--seam)}
+  .btn-mini{width:auto;padding:8px 12px;font-size:13px;margin:0;background:var(--coal);color:var(--smoke);border:1px solid var(--seam);border-radius:9px}
   .btn[disabled]{opacity:.45;cursor:not-allowed}
-
-  /* status line */
-  .status{
-    font-family:var(--mono);font-size:12px;margin-top:12px;
-    color:var(--smoke);min-height:18px;
-  }
+  .status{font-family:var(--mono);font-size:12px;margin-top:12px;color:var(--smoke);min-height:18px;line-height:1.6}
   .status.err{color:var(--danger)}
   .status.ok{color:var(--molten)}
-  .pulse::after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;
-    background:var(--ember);margin-left:8px;animation:pulse 1s infinite alternate}
+  .pulse::after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ember);margin-left:8px;animation:pulse 1s infinite alternate}
   @keyframes pulse{from{opacity:.25}to{opacity:1}}
-
-  /* ---------- route rail ---------- */
   .rail{position:relative;padding-left:34px;margin-top:6px}
-  .rail::before{
-    content:"";position:absolute;left:12px;top:8px;bottom:8px;width:var(--rail-w);
-    background:linear-gradient(180deg,var(--molten),var(--ember) 60%,#7a3b12);
-    border-radius:3px;
-  }
-  .stop{
-    position:relative;padding:12px 0 16px;
-    animation:ignite .5s ease both;
-  }
+  .rail::before{content:"";position:absolute;left:12px;top:8px;bottom:8px;width:3px;background:linear-gradient(180deg,var(--molten),var(--ember) 60%,#7a3b12);border-radius:3px}
+  .stop{position:relative;padding:12px 0 18px;animation:ignite .5s ease both}
   @keyframes ignite{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-  .stop::before{
-    content:"";position:absolute;left:-28px;top:18px;width:13px;height:13px;border-radius:50%;
-    background:var(--coal);border:3px solid var(--ember);
-    box-shadow:0 0 10px rgba(255,122,41,.55);
-  }
+  .stop::before{content:"";position:absolute;left:-28px;top:18px;width:13px;height:13px;border-radius:50%;background:var(--coal);border:3px solid var(--ember);box-shadow:0 0 10px rgba(255,122,41,.55)}
   .stop.user::before{border-color:var(--smoke);box-shadow:none}
-  .daybreak{
-    position:relative;margin:6px 0 10px;padding:6px 0 6px;
-    font-family:var(--mono);font-size:11px;letter-spacing:.2em;
-    text-transform:uppercase;color:var(--molten);
-  }
-  .daybreak::before{
-    content:"";position:absolute;left:-32px;top:8px;width:21px;height:21px;border-radius:50%;
-    background:var(--iron);border:3px solid var(--molten);
-  }
+  .daybreak{position:relative;margin:6px 0 10px;padding:6px 0;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--molten)}
+  .daybreak::before{content:"";position:absolute;left:-32px;top:8px;width:21px;height:21px;border-radius:50%;background:var(--iron);border:3px solid var(--molten)}
   .daybreak .dsum{color:var(--smoke);letter-spacing:0;text-transform:none;display:block;margin-top:2px;font-size:11px}
+  .shot{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:12px;border:1px solid var(--seam);margin-bottom:8px;background:var(--coal);opacity:0;transition:opacity .4s ease}
+  .shot.in{opacity:1}
+  .shot-credit{font-family:var(--mono);font-size:10px;color:var(--seam);margin-bottom:10px;letter-spacing:.06em}
+  .shot-credit a{color:var(--smoke);text-decoration:none}
+  .nophoto{font-family:var(--mono);font-size:10px;color:var(--seam);margin-bottom:8px;letter-spacing:.06em}
   .stop-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
   .stop-name{font-size:17px;font-weight:700;letter-spacing:-.01em}
+  .stop-name.explore{background:none;border:0;color:var(--bone);font-family:inherit;cursor:pointer;padding:0;display:inline-flex;align-items:baseline;gap:8px;text-align:left}
+  .stop-name.explore:hover{color:var(--molten)}
+  .stop-name.explore:focus-visible{outline:2px solid var(--ember);outline-offset:3px;border-radius:4px}
+  .ex-hint{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--ember);opacity:.85}
   .stop-area{font-size:12px;color:var(--smoke)}
-  .stop-why{font-size:14px;color:var(--bone);opacity:.85;margin-top:4px}
-  .stop-meta{
-    display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;
-    font-family:var(--mono);font-size:11px;color:var(--smoke);align-items:center;
-  }
-  .tag{
-    border:1px solid var(--seam);border-radius:6px;padding:2px 7px;
-  }
+  .stop-why{font-size:14px;color:var(--bone);opacity:.9;margin-top:5px}
+  .locals{font-size:13px;color:var(--smoke);margin-top:8px;border-left:2px solid var(--seam);padding-left:10px;font-style:italic}
+  .locals b{color:var(--molten);font-style:normal;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;display:block;margin-bottom:2px}
+  .gem{display:flex;align-items:center;gap:5px;margin-top:9px;font-family:var(--mono);font-size:10px;color:var(--smoke);letter-spacing:.1em;text-transform:uppercase}
+  .flame{width:5px;height:11px;border-radius:2px;background:var(--seam)}
+  .flame.on{background:linear-gradient(180deg,var(--molten),var(--ember))}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+  .chip{font-family:var(--mono);font-size:10px;color:var(--molten);text-decoration:none;border:1px solid #5c4326;border-radius:6px;padding:3px 7px;background:rgba(255,122,41,.06)}
+  .chip:hover{background:rgba(255,122,41,.14)}
+  .stop-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:9px;font-family:var(--mono);font-size:11px;color:var(--smoke);align-items:center}
+  .tag{border:1px solid var(--seam);border-radius:6px;padding:2px 7px}
   .tag.est{color:var(--molten);border-color:#5c4326}
   .tag.unk{color:var(--smoke);border-style:dashed}
   .conf{display:inline-flex;gap:3px;align-items:center}
   .dot{width:6px;height:6px;border-radius:50%;border:1px solid var(--ember)}
   .dot.f{background:var(--ember)}
   .verify{color:var(--molten);text-decoration:none;border-bottom:1px dashed var(--molten)}
-  .rv-note{font-size:12px;color:var(--molten);margin-top:6px;font-family:var(--mono)}
-  .stop-actions{display:flex;gap:8px;margin-top:10px}
-  .stop-actions button{
-    background:none;border:1px solid var(--seam);color:var(--smoke);
-    border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer;
-  }
+  .rv-note{font-size:12px;color:var(--molten);margin-top:7px;font-family:var(--mono)}
+  .stop-actions{display:flex;gap:8px;margin-top:11px}
+  .stop-actions button{background:none;border:1px solid var(--seam);color:var(--smoke);border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer}
   .stop-actions button:hover{color:var(--bone)}
-
-  .empty{
-    text-align:center;color:var(--smoke);padding:34px 10px;
-    border:1px dashed var(--seam);border-radius:var(--radius);font-size:14px;
-  }
-
-  /* honesty banner */
-  .honesty{
-    font-family:var(--mono);font-size:11px;color:var(--smoke);
-    border-left:2px solid var(--ember);padding-left:10px;margin:14px 0 4px;line-height:1.6;
-  }
-
-  /* day export */
-  .day-links a{
-    display:block;background:var(--coal);border:1px solid var(--seam);
-    border-radius:10px;padding:12px 14px;margin-top:8px;
-    color:var(--bone);text-decoration:none;font-size:14px;
-  }
+  .dest-card{position:relative;display:block;background:linear-gradient(120deg,#241708,var(--iron));border:1px solid #5c4326;border-radius:13px;
+    padding:15px 16px;margin:4px 0 14px;text-decoration:none;color:var(--bone);font-weight:750;font-size:16px;letter-spacing:-.01em;animation:ignite .5s ease both}
+  .dest-card:hover{border-color:var(--ember)}
+  .dest-card .dest-go{display:block;margin-top:4px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--ember)}
+  .empty{text-align:center;color:var(--smoke);padding:34px 10px;border:1px dashed var(--seam);border-radius:var(--radius);font-size:14px}
+  .honesty{font-family:var(--mono);font-size:11px;color:var(--smoke);border-left:2px solid var(--ember);padding-left:10px;margin:16px 0 4px;line-height:1.6}
+  .day-links a{display:block;background:var(--coal);border:1px solid var(--seam);border-radius:10px;padding:12px 14px;margin-top:8px;color:var(--bone);text-decoration:none;font-size:14px}
   .day-links a span{color:var(--molten);font-family:var(--mono);font-size:12px}
+  details.log summary{cursor:pointer;list-style:none;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke)}
+  details.log summary::after{content:" +";color:var(--ember)}
+  details.log[open] summary::after{content:" –"}
+  .qlist{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .q{font-family:var(--mono);font-size:10px;color:var(--smoke);border:1px solid var(--ash);border-radius:6px;padding:3px 7px}
+  .slist{margin-top:12px}
+  .slist a{display:block;font-size:12px;color:var(--smoke);text-decoration:none;padding:6px 0;border-bottom:1px solid var(--ash);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .slist a:hover{color:var(--molten)}
+  /* trip start-date control */
+  .triptime{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 14px;font-family:var(--mono);font-size:11px;color:var(--smoke)}
+  .tt-label{color:var(--molten);letter-spacing:.1em;text-transform:uppercase}
+  .tt-note{letter-spacing:.02em}
+  .date-in{background:var(--coal);border:1px solid var(--seam);border-radius:9px;color:var(--bone);padding:7px 9px;font-family:var(--mono);font-size:12px;color-scheme:dark}
+  .date-in::-webkit-calendar-picker-indicator{filter:invert(.7) sepia(1) saturate(5) hue-rotate(-12deg);cursor:pointer}
+  /* per-stop golden-hour light (only shown once geocoded — never faked) */
+  .light{margin-top:9px;font-family:var(--mono);font-size:11px;color:var(--smoke);letter-spacing:.03em;display:none}
+  .light.on{display:block}
+  .light b{color:var(--molten);font-weight:600}
+  .light .li-ic{margin-right:5px}
+  .dest-card .light{margin-top:8px}
+  /* milestone markers (state lines, halfway) — from real data */
+  .milestone{position:relative;margin:2px 0 12px;padding:8px 12px;font-family:var(--mono);font-size:11px;letter-spacing:.07em;
+    color:var(--molten);background:rgba(255,122,41,.07);border:1px dashed rgba(255,122,41,.5);border-radius:10px}
+  .milestone::before{content:"";position:absolute;left:-28px;top:11px;width:12px;height:12px;background:var(--iron);border:2px solid var(--molten);transform:rotate(45deg)}
+  .milestone.half{color:var(--bone);border-color:var(--molten)}
+  .mnote{color:var(--smoke);letter-spacing:0;text-transform:none}
+  /* trip passport */
+  .pass-empty{text-align:center;color:var(--smoke);padding:20px 12px;border:1px dashed var(--seam);border-radius:12px;font-size:13px;line-height:1.6}
+  .pass-empty b{color:var(--molten)}
+  .stamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:10px}
+  .stamp{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--bone);
+    background:radial-gradient(120% 120% at 50% 0%,rgba(255,122,41,.07),var(--coal));border:1px dashed #6b4d2c;border-radius:12px;
+    padding:12px 8px 10px;transform:rotate(var(--rot,0deg));transition:transform .16s ease,border-color .16s ease;animation:ignite .5s ease both}
+  .stamp:hover{transform:rotate(0) translateY(-2px);border-color:var(--ember)}
+  .st-ring{width:44px;height:44px;border-radius:50%;border:2px solid var(--ember);display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-weight:700;color:var(--molten);font-size:15px;box-shadow:inset 0 0 0 3px rgba(255,122,41,.12)}
+  .st-name{font-size:12px;font-weight:700;text-align:center;line-height:1.2;letter-spacing:-.01em}
+  .st-area{font-size:10px;color:var(--smoke);text-align:center;line-height:1.2}
+  .st-date{font-family:var(--mono);font-size:9px;color:var(--ember);letter-spacing:.08em;margin-top:1px}
+  #passTier{color:var(--molten);letter-spacing:0;text-transform:none;font-family:var(--sans);font-weight:600}
 
-  /* ledger */
-  details.ledger{margin-bottom:16px}
-  details.ledger summary{
-    cursor:pointer;list-style:none;
-    background:var(--iron);border:1px solid var(--ash);border-radius:var(--radius);
-    padding:16px 18px;font-size:14px;font-weight:600;
-  }
-  details.ledger summary::after{content:" +";color:var(--ember)}
-  details.ledger[open] summary::after{content:" –"}
-  .ledger-body{padding:6px 4px 0}
-  .fix{
-    border-bottom:1px solid var(--ash);padding:12px 2px;
-  }
-  .fix:last-child{border:0}
-  .fix .prob{font-size:13px;color:var(--smoke)}
-  .fix .prob b{color:var(--danger);font-weight:600}
-  .fix .sol{font-size:14px;margin-top:3px}
-  .fix .sol b{color:var(--molten);font-weight:600}
-
-  .foot{
-    text-align:center;color:var(--smoke);font-family:var(--mono);
-    font-size:11px;margin-top:28px;letter-spacing:.08em;
-  }
+  .foot{text-align:center;color:var(--smoke);font-family:var(--mono);font-size:11px;margin-top:28px;letter-spacing:.08em}
+  .foot a{color:var(--smoke)}
   .hidden{display:none}
-
-  @media (prefers-reduced-motion: reduce){
-    *{animation:none!important;transition:none!important}
-  }
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <header>
-    <div class="eyebrow"><a href="/" style="color:var(--ember);text-decoration:none">← RouteForge</a> · the planner</div>
-    <h1>Route<span class="lit">Forge</span></h1>
-    <p class="sub">A road-trip planner that <b>never invents your facts</b>. Unlimited stops, live-checked suggestions, honest unknowns, one-tap export to your nav app. No account. No paywall. Nothing auto-renews — because nothing bills.</p>
+    <div class="eyebrow"><a href="/">← RouteForge</a> · the planner</div>
+    <h1>Forge the <span class="lit">drive</span></h1>
+    <p class="sub">We read the threads so you don't have to. <b>Real stops, real sources, real photos — and a "?" when we don't know.</b> Tap any stop to open its storybook: photos, food, adventures, places to crash.</p>
   </header>
 
-  <!-- ================= PLANNER ================= -->
   <section class="card" aria-label="Plan a route">
     <h2>Forge a route</h2>
     <label for="start">Start</label>
-    <input type="text" id="start" placeholder="Fargo, ND" autocomplete="off">
+    <input type="text" id="start" placeholder="Grand Forks, ND" autocomplete="off">
     <label for="end">Destination</label>
-    <input type="text" id="end" placeholder="Yellowstone National Park" autocomplete="off">
+    <input type="text" id="end" placeholder="Lake Tahoe" autocomplete="off">
     <label for="vibe">What's worth stopping for? <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
-    <input type="text" id="vibe" placeholder="weird roadside stuff, good coffee, short hikes" autocomplete="off">
+    <input type="text" id="vibe" placeholder="natural scenery, weird roadside stuff, good coffee" autocomplete="off">
 
     <div class="row" style="margin-top:14px">
       <div>
@@ -284,22 +191,26 @@
     </div>
 
     <div class="check">
-      <input type="checkbox" id="liveCheck" checked>
-      <label for="liveCheck" style="margin:0;text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:14px">Live-verify against the web (slower, fresher)</label>
+      <input type="checkbox" id="photos" checked>
+      <label for="photos" style="margin:0;text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:14px">Pull photos where they exist</label>
     </div>
 
-    <button class="btn btn-primary" id="forgeBtn">Forge route</button>
+    <button class="btn btn-primary" id="forgeBtn">Research my route</button>
     <div class="status" id="status" role="status"></div>
   </section>
 
-  <!-- ================= ITINERARY ================= -->
   <section class="card" aria-label="Itinerary">
     <h2>Itinerary <span id="tripTitle" style="color:var(--bone);letter-spacing:0;text-transform:none"></span></h2>
+    <div class="triptime hidden" id="tripTime">
+      <span class="tt-label">🗓 Leaving</span>
+      <input type="date" id="leaveDate" class="date-in" aria-label="Trip start date">
+      <span class="tt-note">sets each day's date, light &amp; sunset</span>
+    </div>
     <div id="railHost">
-      <div class="empty">No route yet. Set your endpoints above and forge one — or add stops by hand below.</div>
+      <div class="empty">No route yet. Set your endpoints above — we'll dig through Reddit, forums and trip reports for the stops worth pulling over for.</div>
     </div>
     <p class="honesty" id="honesty" style="display:none">
-      Drive times marked <b style="color:var(--molten)">EST</b> are model estimates; <b>?</b> means unconfirmed — RouteForge shows a gap instead of inventing a number. Verify anything load-bearing before you drive.
+      <b style="color:var(--molten)">EST</b> = model estimate. <b>?</b> = we couldn't confirm it, so we're not guessing. Photos come from Wikimedia; a spot with no listed photo says so. Every claim links to where we found it — check anything load-bearing before you drive.
     </p>
 
     <div class="row" style="margin-top:14px">
@@ -308,329 +219,422 @@
     </div>
   </section>
 
-  <!-- ================= EXPORT ================= -->
+  <section class="card" id="passportCard" aria-label="Trip passport">
+    <h2>Your passport <span id="passTier"></span></h2>
+    <div id="passBody"></div>
+  </section>
+
+  <section class="card hidden" id="researchCard" aria-label="Research log">
+    <details class="log">
+      <summary>What we searched · <span id="srcCount">0</span> sources</summary>
+      <div class="qlist" id="qlist"></div>
+      <div class="slist" id="slist"></div>
+    </details>
+  </section>
+
   <section class="card hidden" id="exportCard" aria-label="Navigate">
     <h2>Drive it</h2>
-    <p style="font-size:14px;color:var(--smoke)">Each day opens as a ready-made route in Google Maps — we do the discovery and day-splitting, your nav app does the turns. No waypoint caps hit.</p>
+    <p style="font-size:14px;color:var(--smoke)">Each day opens as a ready-made route in Google Maps — we do the research and day-splitting, your nav app does the turns.</p>
     <div class="day-links" id="dayLinks"></div>
   </section>
 
-  <!-- ================= SAVE / SHARE ================= -->
   <section class="card" aria-label="Save and share">
     <h2>Keep it · share it</h2>
     <div class="row">
       <button class="btn btn-ghost" id="saveBtn" style="margin-top:0">Save trip</button>
-      <button class="btn btn-ghost" id="shareBtn" style="margin-top:0">Share trip</button>
+      <button class="btn btn-ghost" id="shareBtn" style="margin-top:0">Copy trip</button>
     </div>
     <div class="row" style="margin-top:10px">
       <select id="tripList"><option value="">My saved trips…</option></select>
       <button class="btn-mini" id="loadBtn" style="flex:0 0 auto">Load</button>
     </div>
-    <div class="row" style="margin-top:10px">
-      <input type="text" id="shareCode" placeholder="Have a code? RF-XXXX">
-      <button class="btn-mini" id="loadShared" style="flex:0 0 auto">Open</button>
-    </div>
     <div class="status" id="saveStatus"></div>
-    <p class="honesty">Trips save to this device's app storage. Shared trips are readable by <b>anyone with the code</b> — don't put private notes in a shared trip. Sharing is free for every collaborator, not a paid tier.</p>
   </section>
 
-  <!-- ================= DESIGN LEDGER ================= -->
-  <details class="ledger">
-    <summary>Design ledger — every market weakness, and the fix shipped here</summary>
-    <div class="ledger-body">
-      <div class="fix"><div class="prob"><b>Roadtrippers:</b> cut free users from ~27 waypoints to 7; billing dark patterns bred rage-churn.</div><div class="sol"><b>Fix:</b> unlimited stops, no account, no billing surface at all. Nothing can auto-renew.</div></div>
-      <div class="fix"><div class="prob"><b>Roadtrippers:</b> stale POIs — closed restaurants, wrong hours.</div><div class="sol"><b>Fix:</b> optional live web-verify pass on every generation; freshness is a runtime check, not a database rotting on a shelf.</div></div>
-      <div class="fix"><div class="prob"><b>Copilot2trip / AI planners:</b> hallucinated travel times, unreliable picks, features the model didn't know it had.</div><div class="sol"><b>Enhance (the LuxeForge doctrine):</b> the model is contractually forbidden from inventing numbers — unknown legs render as <b>?</b>, every stop carries a confidence gauge and a verify link. Structurally honest, not vibes-honest.</div></div>
-      <div class="fix"><div class="prob"><b>Google Maps:</b> no along-the-route discovery, ~10-waypoint cap, plans evaporate after the drive.</div><div class="sol"><b>Fix:</b> we own discovery + day logic + persistence, then export each day as a Maps link under the cap. Complement the giant, don't fight it.</div></div>
-      <div class="fix"><div class="prob"><b>Furkot:</b> deepest day-logic in the category, buried under a brutal learning curve.</div><div class="sol"><b>Enhance:</b> the same auto day-splitting reduced to one slider — max hours per day. Zero config screens.</div></div>
-      <div class="fix"><div class="prob"><b>Wanderlog:</b> collaboration is the growth loop, but premium features stay locked for everyone else in the group.</div><div class="sol"><b>Fix:</b> share codes are free for all collaborators. The viral loop is never taxed.</div></div>
-      <div class="fix"><div class="prob"><b>RV Life:</b> proves people pay for fear-removal (bridge strikes) — but general planners ignore RVs entirely.</div><div class="sol"><b>Fix (honest v1):</b> RV mode biases suggestions toward big-rig-friendly stops and flags a clearance/parking advisory on every stop. Advisory, not certified routing — labeled as such.</div></div>
-      <div class="fix"><div class="prob"><b>Autio:</b> great story layer, thin coverage off marquee corridors.</div><div class="sol"><b>Enhance:</b> every suggested stop ships with a one-line "why it's worth it," generated for anywhere — labeled color, not fact.</div></div>
-      <div class="fix"><div class="prob"><b>TripStone / MYV / WilderTrips:</b> no accumulating asset — nothing compounds.</div><div class="sol"><b>Fix:</b> saved trips + share codes are the seed of a proprietary trip-corpus; the data layer is designed to compound from day one.</div></div>
-    </div>
-  </details>
-
-  <p class="foot">ROUTEFORGE · PROTOTYPE 0.1 · ESTIMATES ARE LABELED · UNKNOWNS STAY UNKNOWN</p>
+  <p class="foot">ROUTEFORGE · SOURCED, NOT INVENTED · <a href="/signup.html">SIGN UP</a></p>
 </div>
 
 <script>
-/* =====================================================
-   RouteForge — state
-===================================================== */
-const S = {
-  trip: { name:"", vehicle:"car", maxHours:6, stops:[] },
-  busy:false
-};
-const $ = id => document.getElementById(id);
-const esc = s => String(s??"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const S={trip:{name:"",vehicle:"car",maxHours:6,stops:[],start:"",end:""},research:null,busy:false};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LS="routeforge.trips.v1";
 
-/* =====================================================
-   storage adapter (artifact key-value store; in-memory fallback)
-   — one key per trip, batched writes
-===================================================== */
-const store = {
-  ok: typeof window!=="undefined" && !!window.storage,
-  async get(k){ try{ const r=await window.storage.get(k); return r?JSON.parse(r.value):null }catch(e){ return null } },
-  async getShared(k){ try{ const r=await window.storage.get(k,true); return r?JSON.parse(r.value):null }catch(e){ return null } },
-  async set(k,v,sh=false){ try{ const r=await window.storage.set(k,JSON.stringify(v),sh); return !!r }catch(e){ return false } },
-  async list(p){ try{ const r=await window.storage.list(p); return r?r.keys:[] }catch(e){ return [] } }
-};
-
-/* =====================================================
-   AI call — the anti-hallucination contract
-===================================================== */
-function buildPrompt(start,end,vibe,n,vehicle){
-  return `You are RouteForge's route intelligence. Plan driving-corridor stops between "${start}" and "${end}".
-Traveler interests: ${vibe||"general — scenic, memorable, worth a detour"}. Vehicle: ${vehicle==="rv"?"large RV/trailer — strongly prefer stops with big-vehicle parking and easy access":"car"}.
-
-HARD RULES (violating any = failure):
-- Respond with ONLY a JSON object. No prose, no markdown fences.
-- Exactly ${n} stops, ordered along the realistic driving corridor from start to end.
-- NEVER invent opening hours, prices, or open/closed status. Do not include them at all.
-- drive_min_from_prev = estimated driving minutes from the previous point (from "${start}" for the first stop; also include final leg to "${end}" as last_leg_min). If you are not reasonably confident, use null instead of guessing.
-- confidence: "high" | "medium" | "low" — how sure you are this place exists as described and sits near the corridor.
-- why: max 12 words, concrete, no marketing fluff.
-- Keep every string short.
-
-JSON shape:
-{"stops":[{"name":"","area":"town, ST","why":"","category":"","drive_min_from_prev":null,"detour_min":null,"confidence":"medium"}],"last_leg_min":null,"route_summary":"one short sentence"}`;
+const STAGES=[
+  "Mapping the driving corridor…",
+  "Reading Reddit threads and trip reports…",
+  "Cross-checking the good ones…",
+  "Sorting gems from tourist traps…",
+  "Writing it up honestly…"
+];
+let stageTimer=null;
+function runStages(){
+  let i=0; setStatus(STAGES[0],"",true);
+  stageTimer=setInterval(()=>{ i=Math.min(i+1,STAGES.length-1); setStatus(STAGES[i],"",true); },7000);
 }
+function stopStages(){ clearInterval(stageTimer); stageTimer=null; }
 
 async function forgeRoute(){
   const start=$("start").value.trim(), end=$("end").value.trim();
-  if(!start||!end){ setStatus("Enter both a start and a destination.", "err"); return; }
+  if(!start||!end){ setStatus("Enter both a start and a destination.","err"); return; }
   if(S.busy) return;
-  S.busy=true; $("forgeBtn").disabled=true;
-  const live=$("liveCheck").checked;
-  setStatus(live?"Forging — live-checking the corridor…":"Forging route…","", true);
+  S.busy=true; $("forgeBtn").disabled=true; runStages();
   try{
-    const body={
-      model:"claude-sonnet-4-6",
-      max_tokens:1000,
-      messages:[{role:"user",content:buildPrompt(start,end,$("vibe").value.trim(),$("nstops").value,S.trip.vehicle)}]
-    };
-    if(live) body.tools=[{type:"web_search_20250305",name:"web_search"}];
-    const res=await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)
+    const res=await fetch("/api/forge",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({start,end,vibe:$("vibe").value.trim(),stops:+$("nstops").value,vehicle:S.trip.vehicle})
     });
-    if(!res.ok) throw new Error("API "+res.status);
-    const data=await res.json();
-    const text=(data.content||[]).filter(b=>b.type==="text").map(b=>b.text||"").join("\n");
-    const parsed=extractJSON(text);
-    if(!parsed||!Array.isArray(parsed.stops)||!parsed.stops.length) throw new Error("no-json");
-    S.trip.name=`${start} → ${end}`;
-    S.trip.start=start; S.trip.end=end;
-    S.trip.lastLeg=numOrNull(parsed.last_leg_min);
-    S.trip.stops=parsed.stops.map(s=>({
-      id:crypto.randomUUID(),
-      name:String(s.name||"Unnamed stop").slice(0,80),
-      area:String(s.area||"").slice(0,60),
-      why:String(s.why||"").slice(0,120),
-      category:String(s.category||"").slice(0,30),
-      drive:numOrNull(s.drive_min_from_prev),
-      detour:numOrNull(s.detour_min),
-      confidence:["high","medium","low"].includes(s.confidence)?s.confidence:"low",
-      source:"ai"
-    }));
-    render();
-    setStatus(parsed.route_summary?String(parsed.route_summary).slice(0,140):"Route forged.","ok");
+    const data=await res.json().catch(()=>null);
+    if(!res.ok){
+      stopStages();
+      setStatus(data&&data.message?data.message:"Route research failed. Forge again.","err");
+      return;
+    }
+    S.trip.name=start+" → "+end; S.trip.start=start; S.trip.end=end;
+    S.trip.stops=(data.stops||[]).map(s=>Object.assign({id:uid(),source:"ai",photo:undefined},s));
+    S.research=data.research||null;
+    stopStages();
+    render(); renderResearch();
+    setStatus(data.route_summary||"Route researched.","ok");
+    if($("photos").checked) loadPhotos();
   }catch(e){
-    setStatus(e.message==="no-json"
-      ?"The model returned an unreadable plan. Forge again — it usually lands on retry."
-      :(store.ok
-        ?"Couldn't reach route intelligence. Check connection and forge again."
-        :"AI generation isn't wired into this hosted demo yet — add stops manually below."),"err");
+    stopStages();
+    setStatus("Couldn't reach the research service. Check your connection and try again.","err");
   }finally{ S.busy=false; $("forgeBtn").disabled=false; }
 }
-function extractJSON(t){
-  if(!t) return null;
-  t=t.replace(/```json|```/g,"").trim();
-  const a=t.indexOf("{"), b=t.lastIndexOf("}");
-  if(a<0||b<=a) return null;
-  try{ return JSON.parse(t.slice(a,b+1)) }catch(e){ return null }
-}
-const numOrNull=v=> (typeof v==="number"&&isFinite(v)&&v>=0)?Math.round(v):null;
 
-/* =====================================================
-   day splitting — Furkot's logic, one slider's worth of UX
-===================================================== */
-const UNKNOWN_LEG=45; // planning placeholder, always displayed as "?"
+async function loadPhotos(){
+  for(const st of S.trip.stops){
+    if(st.photo!==undefined) continue;
+    st.photo=await wikiPhoto(st.name, st.area);
+    paintPhoto(st);
+  }
+}
+// Only trust a Wikipedia photo when the matched PAGE TITLE is genuinely the
+// place — otherwise the search returns a wrong page's lead image (a cafe → a
+// senator). Deterministic token matching, never the model.
+const PHOTO_STOP=new Set(("the a an of and or on at in near cafe café restaurant restaurants grill grille bar pub tavern saloon pizza pizzeria co inc llc ltd company hotel motel lodge inn resort spa park state national campground campgrounds rv diner kitchen house natural foods food coffee brewery brewing bakery deli grocery market shop store eatery bistro trail trails overlook point tours tour").split(" "));
+function pTokens(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(Boolean); }
+function pDistinct(name){ return pTokens(name).filter(t=>t.length>=3 && !PHOTO_STOP.has(t)); }
+function titleRelevant(name,title){
+  const d=pDistinct(name); if(!d.length) return false;
+  const tt=pTokens(title);
+  const has=t=>tt.some(x=>x===t||(x.startsWith(t)&&x.length-t.length<=3)||(t.startsWith(x)&&t.length-x.length<=3));
+  const matched=d.filter(has);
+  if(!matched.length) return false;
+  return matched.some(t=>t.length>=4) || matched.length>=2;
+}
+async function wikiPhoto(name,area){
+  const q=[name,area].filter(Boolean).join(" ");
+  const url="https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*"
+    +"&generator=search&gsrsearch="+encodeURIComponent(q)+"&gsrlimit=4"
+    +"&prop=pageimages|info&inprop=url&piprop=thumbnail&pithumbsize=640";
+  try{
+    const r=await fetch(url); if(!r.ok) return null;
+    const j=await r.json();
+    const pages=j&&j.query&&j.query.pages; if(!pages) return null;
+    const list=Object.values(pages).sort((a,b)=>(a.index||0)-(b.index||0));
+    for(const p of list){
+      if(p&&p.thumbnail&&p.thumbnail.source&&titleRelevant(name,p.title||"")){
+        return {src:p.thumbnail.source, page:p.fullurl||null, title:p.title||q};
+      }
+    }
+    return null;
+  }catch(e){ return null; }
+}
+function paintPhoto(st){
+  const host=document.querySelector('[data-photo="'+st.id+'"]');
+  if(!host) return;
+  if(!st.photo){ host.innerHTML='<div class="nophoto">NO PHOTO LISTED FOR THIS SPOT</div>'; return; }
+  host.innerHTML='<img class="shot" alt="'+esc(st.name)+'" loading="lazy" src="'+esc(st.photo.src)+'">'
+    +'<div class="shot-credit">PHOTO: WIKIMEDIA · <a href="'+esc(st.photo.page||"#")+'" target="_blank" rel="noopener">'+esc(st.photo.title)+'</a></div>';
+  const img=host.querySelector("img");
+  img.onload=()=>img.classList.add("in");
+  img.onerror=()=>{ host.innerHTML='<div class="nophoto">NO PHOTO LISTED FOR THIS SPOT</div>'; };
+}
+
+const UNKNOWN_LEG=45;
 function splitDays(){
-  const cap=S.trip.maxHours*60;
-  const days=[]; let cur=[],acc=0,anyUnknown=false;
+  const cap=S.trip.maxHours*60, days=[]; let cur=[],acc=0,unk=false;
   S.trip.stops.forEach(st=>{
-    const leg=st.drive??UNKNOWN_LEG;
-    if(cur.length&&acc+leg>cap){ days.push({stops:cur,mins:acc,unknown:anyUnknown}); cur=[];acc=0;anyUnknown=false; }
-    cur.push(st); acc+=leg; if(st.drive==null)anyUnknown=true;
+    const leg=(st.drive==null?UNKNOWN_LEG:st.drive);
+    if(cur.length&&acc+leg>cap){ days.push({stops:cur,mins:acc,unknown:unk}); cur=[];acc=0;unk=false; }
+    cur.push(st); acc+=leg; if(st.drive==null)unk=true;
   });
-  if(cur.length) days.push({stops:cur,mins:acc,unknown:anyUnknown});
+  if(cur.length) days.push({stops:cur,mins:acc,unknown:unk});
   return days;
 }
 
-/* =====================================================
-   render
-===================================================== */
 function confDots(c){
   const n=c==="high"?3:c==="medium"?2:1;
-  let h='<span class="conf" title="confidence: '+c+'">';
-  for(let i=0;i<3;i++) h+=`<span class="dot ${i<n?"f":""}"></span>`;
+  let h='<span class="conf" title="how sure we are this place exists as described">';
+  for(let i=0;i<3;i++) h+='<span class="dot '+(i<n?"f":"")+'"></span>';
   return h+"</span>";
 }
-function mapsSearch(q){ return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q); }
+function gemBar(n){
+  let h='<span class="gem" title="1 = everyone stops here · 5 = you would only know from a local">';
+  for(let i=1;i<=5;i++) h+='<span class="flame '+(i<=n?"on":"")+'"></span>';
+  return h+'<span style="margin-left:4px">'+(n>=4?"Hidden gem":n===3?"Locally known":"Well trodden")+'</span></span>';
+}
+const mapsSearch=q=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q);
+
+function storybookURL(name,area,eta,from){
+  const p=new URLSearchParams({name:name});
+  if(area) p.set("area",area);
+  if(eta!=null) p.set("eta",eta);
+  if(from) p.set("from",from);
+  if(S.trip.vehicle==="rv") p.set("vehicle","rv");
+  return "/place.html?"+p.toString();
+}
 
 function render(){
   const host=$("railHost");
   if(!S.trip.stops.length){
-    host.innerHTML='<div class="empty">No route yet. Set your endpoints above and forge one — or add stops by hand below.</div>';
-    $("honesty").style.display="none";
-    $("exportCard").classList.add("hidden");
-    $("tripTitle").textContent="";
+    host.innerHTML='<div class="empty">No route yet. Set your endpoints above — we\'ll dig through Reddit, forums and trip reports for the stops worth pulling over for.</div>';
+    $("honesty").style.display="none"; $("exportCard").classList.add("hidden"); $("tripTitle").textContent="";
     return;
   }
   $("tripTitle").textContent="· "+(S.trip.name||"");
   $("honesty").style.display="block";
+  $("tripTime").classList.remove("hidden");
+  if($("leaveDate")&&!$("leaveDate").value){ try{ $("leaveDate").value=new Date().toLocaleDateString('en-CA'); }catch(e){} }
   const days=splitDays();
-  let html='<div class="rail">';
-  let idx=0;
+  // milestones from real data: state-line crossings + drive-time halfway
+  const flat=S.trip.stops;
+  const seqSt=[S.trip.start||"",...flat.map(s=>s.area||s.name||""),S.trip.end||""].map(stateOf);
+  const crossBefore=p=>{ const a=seqSt[p],b=seqSt[p+1]; return (a&&b&&a!==b)?b:null; };
+  const legs=flat.map(s=>s.drive==null?UNKNOWN_LEG:s.drive), total=legs.reduce((a,b)=>a+b,0), anyUnk=flat.some(s=>s.drive==null);
+  let halfAfter=-1; if(flat.length>1&&total>0){ let run=0; for(let p=0;p<legs.length;p++){ run+=legs[p]; if(run>=total/2){ halfAfter=p; break; } } }
+  let html='<div class="rail">',idx=0;
   days.forEach((d,di)=>{
-    const h=Math.floor(d.mins/60), m=d.mins%60;
-    html+=`<div class="daybreak">Day ${di+1}<span class="dsum">~${h}h${m?` ${m}m`:""} driving${d.unknown?" · includes unconfirmed legs (?)":""}</span></div>`;
+    const h=Math.floor(d.mins/60),m=d.mins%60;
+    html+='<div class="daybreak">Day '+(di+1)+'<span class="dsum">~'+h+'h'+(m?" "+m+"m":"")+' driving'+(d.unknown?" · includes unconfirmed legs (?)":"")+'</span></div>';
     d.stops.forEach(st=>{
-      const leg = st.drive!=null
-        ? `<span class="tag est">EST ${st.drive} min drive</span>`
-        : `<span class="tag unk">? drive time unconfirmed</span>`;
-      const det = st.detour!=null ? `<span class="tag est">+${st.detour} min detour</span>` : "";
-      html+=`<div class="stop ${st.source==="user"?"user":""}" style="animation-delay:${Math.min(idx*70,600)}ms">
-        <div class="stop-head">
-          <span class="stop-name">${esc(st.name)}</span>
-          ${st.area?`<span class="stop-area">${esc(st.area)}</span>`:""}
-        </div>
-        ${st.why?`<div class="stop-why">${esc(st.why)}</div>`:""}
-        <div class="stop-meta">
-          ${st.source==="ai"?confDots(st.confidence):'<span class="tag">your stop</span>'}
-          ${leg}${det}
-          <a class="verify" target="_blank" rel="noopener" href="${mapsSearch(st.name+" "+st.area)}">verify on map</a>
-        </div>
-        ${S.trip.vehicle==="rv"?'<div class="rv-note">RV advisory: confirm clearance &amp; big-rig parking before committing.</div>':""}
-        <div class="stop-actions">
-          <button data-a="up" data-id="${st.id}" aria-label="Move up">▲</button>
-          <button data-a="down" data-id="${st.id}" aria-label="Move down">▼</button>
-          <button data-a="del" data-id="${st.id}" aria-label="Remove">Remove</button>
-        </div>
-      </div>`;
+      const cx=crossBefore(idx); if(cx) html+='<div class="milestone">🪧 Crossing into <b>'+esc(fullState(cx))+'</b></div>';
+      const leg=st.drive!=null?'<span class="tag est">EST '+st.drive+' min drive</span>':'<span class="tag unk">? drive time unconfirmed</span>';
+      const det=st.detour!=null?'<span class="tag est">+'+st.detour+' min detour</span>':"";
+      const ev=st.evidence||[];
+      const chips=ev.map(e=>'<a class="chip" href="'+esc(e.url)+'" target="_blank" rel="noopener">'+esc(e.source)+' ↗</a>').join("");
+      html+='<div class="stop '+(st.source==="user"?"user":"")+'" style="animation-delay:'+Math.min(idx*70,600)+'ms">'
+        +'<div data-photo="'+st.id+'"></div>'
+        +'<div class="stop-head"><button type="button" class="stop-name explore" data-explore="'+st.id+'">'+esc(st.name)+'<span class="ex-hint">storybook ↗</span></button>'
+        +(st.area?'<span class="stop-area">'+esc(st.area)+'</span>':"")+'</div>'
+        +(st.why?'<div class="stop-why">'+esc(st.why)+'</div>':"")
+        +(st.locals_say?'<div class="locals"><b>What travelers said</b>'+esc(st.locals_say)+'</div>':"")
+        +(st.source==="ai"?gemBar(st.secret_score||3):"")
+        +(chips?'<div class="chips">'+chips+'</div>':(st.source==="ai"?'<div class="chips"><span class="q">no source found — treat as unverified</span></div>':""))
+        +'<div class="stop-meta">'
+          +(st.source==="ai"?confDots(st.confidence):'<span class="tag">your stop</span>')
+          +leg+det
+          +'<a class="verify" target="_blank" rel="noopener" href="'+mapsSearch(st.name+" "+(st.area||""))+'">verify on map</a>'
+        +'</div>'
+        +'<div class="light" data-light="'+st.id+'"></div>'
+        +(S.trip.vehicle==="rv"?'<div class="rv-note">RV advisory: confirm clearance &amp; big-rig parking before committing.</div>':"")
+        +'<div class="stop-actions">'
+          +'<button data-a="up" data-id="'+st.id+'" aria-label="Move up">▲</button>'
+          +'<button data-a="down" data-id="'+st.id+'" aria-label="Move down">▼</button>'
+          +'<button data-a="del" data-id="'+st.id+'" aria-label="Remove">Remove</button>'
+        +'</div></div>';
+      if(idx===halfAfter&&flat.length>1) html+='<div class="milestone half">🏁 About halfway to <b>'+esc(S.trip.end||"the destination")+'</b>'+(anyUnk?' <span class="mnote">(by estimated drive time)</span>':'')+'</div>';
       idx++;
     });
   });
+  if(S.trip.end){
+    const lastStop=S.trip.stops[S.trip.stops.length-1];
+    const from=lastStop?lastStop.name:(S.trip.start||"");
+    const dcx=crossBefore(flat.length);
+    if(dcx) html+='<div class="milestone">🪧 Crossing into <b>'+esc(fullState(dcx))+'</b></div>';
+    html+='<div class="daybreak">Final chapter</div>'
+      +'<a class="dest-card" href="'+esc(storybookURL(S.trip.end,"",null,from))+'">'+esc(S.trip.end)
+      +'<span class="dest-go">Open the destination storybook ↗</span>'
+      +'<div class="light" data-light="__dest"></div></a>';
+  }
   html+="</div>";
   host.innerHTML=html;
   host.querySelectorAll("button[data-a]").forEach(b=>b.addEventListener("click",onStopAction));
+  host.querySelectorAll("button[data-explore]").forEach(b=>b.addEventListener("click",onExplore));
+  S.trip.stops.forEach(st=>{ if(st.photo!==undefined) paintPhoto(st); });
+  days.forEach((d,di)=>d.stops.forEach(st=>paintLight(st,di)));
+  if(S.trip.end) paintLight({id:"__dest",name:S.trip.end,area:""},days.length-1);
   renderExport(days);
+}
+
+function onExplore(e){
+  const id=e.currentTarget.dataset.explore;
+  const st=S.trip.stops.find(s=>s.id===id); if(!st) return;
+  const i=S.trip.stops.indexOf(st);
+  const from=i>0?S.trip.stops[i-1].name:(S.trip.start||"");
+  location.href=storybookURL(st.name, st.area||"", st.drive!=null?st.drive:null, from);
+}
+
+/* ===== Golden-hour light on the rail: exact sunrise/sunset astronomy (SunCalc,
+   MIT) + keyless Open-Meteo geocoding. Real for any date, never invented. ===== */
+const SUN=(function(){
+  const rad=Math.PI/180, dayMs=864e5, J1970=2440588, J2000=2451545, e=rad*23.4397;
+  const toDays=d=>d.valueOf()/dayMs-0.5+J1970-J2000;
+  const M=d=>rad*(357.5291+0.98560028*d);
+  const L=m=>m+rad*(1.9148*Math.sin(m)+0.02*Math.sin(2*m)+0.0003*Math.sin(3*m))+rad*102.9372+Math.PI;
+  const dec=l=>Math.asin(Math.sin(e)*Math.sin(l));
+  const J0=0.0009, approx=(Ht,lw,n)=>J0+(Ht+lw)/(2*Math.PI)+n;
+  const transitJ=(ds,m,l)=>J2000+ds+0.0053*Math.sin(m)-0.0069*Math.sin(2*l);
+  const ha=(h,phi,d)=>Math.acos((Math.sin(h)-Math.sin(phi)*Math.sin(d))/(Math.cos(phi)*Math.cos(d)));
+  const fromJ=j=>new Date((j+0.5-J1970)*dayMs);
+  return function(date,lat,lng){
+    const lw=rad*-lng, phi=rad*lat, d=toDays(date), n=Math.round(d-J0-lw/(2*Math.PI));
+    const ds=approx(0,lw,n), m=M(ds), l=L(m), de=dec(l), Jnoon=transitJ(ds,m,l);
+    function evt(a){ const w=ha(a*rad,phi,de); if(isNaN(w)) return {rise:new Date(NaN),set:new Date(NaN)};
+      const Jset=transitJ(approx(w,lw,n),m,l); return {set:fromJ(Jset),rise:fromJ(Jnoon-(Jset-Jnoon))}; }
+    const s=evt(-0.833), g=evt(6);
+    return {sunrise:s.rise,sunset:s.set,goldenHourStart:g.set};
+  };
+})();
+function fmtTime(d,tz){ try{ return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:tz}); }catch(e){ return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}); } }
+function dateForDay(di){
+  let base; try{ base=($("leaveDate")&&$("leaveDate").value)||new Date().toLocaleDateString('en-CA'); }catch(e){ base=new Date().toLocaleDateString('en-CA'); }
+  const d=new Date(base+'T12:00:00Z'); if(isNaN(d)) return null; d.setUTCDate(d.getUTCDate()+(di||0));
+  return {iso:d.toISOString().slice(0,10), label:d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',timeZone:'UTC'})};
+}
+const GEO=new Map();
+function geocodeQuery(q){
+  q=String(q||'').split(',')[0].trim(); if(!q) return Promise.resolve(null);
+  if(GEO.has(q)) return GEO.get(q);
+  const p=(async()=>{ try{
+    const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&format=json&name='+encodeURIComponent(q));
+    if(!r.ok) return null; const j=await r.json(); const g=j&&j.results&&j.results[0];
+    return (g&&typeof g.latitude==='number')?{lat:g.latitude,lon:g.longitude,tz:g.timezone||undefined}:null;
+  }catch(e){ return null; } })();
+  GEO.set(q,p); return p;
+}
+async function paintLight(st,di){
+  const host=document.querySelector('[data-light="'+(st.id||'')+'"]'); if(!host) return;
+  const dt=dateForDay(di); if(!dt) return;
+  const geo=await geocodeQuery(st.area||st.name); if(!geo) return;         // no location → stay blank, never faked
+  const t=SUN(new Date(dt.iso+'T12:00:00Z'),geo.lat,geo.lon);
+  if(!t||isNaN(t.sunset)) return;
+  const gh=(t.goldenHourStart&&!isNaN(t.goldenHourStart))?fmtTime(t.goldenHourStart,geo.tz):null;
+  host.innerHTML='<span class="li-ic">🌅</span>'+esc(dt.label)+(gh?' · golden hour <b>'+esc(gh)+'</b>':'')+' · sunset <b>'+esc(fmtTime(t.sunset,geo.tz))+'</b>';
+  host.classList.add('on');
+}
+
+/* ===== US state parsing for milestone crossings (deterministic, from the
+   stop's own area text — never guessed) ===== */
+const STATE_NAMES={alabama:'AL',alaska:'AK',arizona:'AZ',arkansas:'AR',california:'CA',colorado:'CO',connecticut:'CT',delaware:'DE','district of columbia':'DC',florida:'FL',georgia:'GA',hawaii:'HI',idaho:'ID',illinois:'IL',indiana:'IN',iowa:'IA',kansas:'KS',kentucky:'KY',louisiana:'LA',maine:'ME',maryland:'MD',massachusetts:'MA',michigan:'MI',minnesota:'MN',mississippi:'MS',missouri:'MO',montana:'MT',nebraska:'NE',nevada:'NV','new hampshire':'NH','new jersey':'NJ','new mexico':'NM','new york':'NY','north carolina':'NC','north dakota':'ND',ohio:'OH',oklahoma:'OK',oregon:'OR',pennsylvania:'PA','rhode island':'RI','south carolina':'SC','south dakota':'SD',tennessee:'TN',texas:'TX',utah:'UT',vermont:'VT',virginia:'VA',washington:'WA','west virginia':'WV',wisconsin:'WI',wyoming:'WY'};
+const STATE_FULL=Object.fromEntries(Object.entries(STATE_NAMES).map(([k,v])=>[v,k.replace(/\b\w/g,c=>c.toUpperCase())]));
+const STATE_ABBR=new Set(Object.values(STATE_NAMES));
+function stateOf(txt){
+  if(!txt) return null;
+  const parts=String(txt).split(',').map(s=>s.trim()).filter(Boolean);
+  for(let i=parts.length-1;i>=0;i--){ const p=parts[i];
+    const first=p.split(/\s+/)[0].toUpperCase();
+    if(p.length<=3 && STATE_ABBR.has(p.toUpperCase())) return p.toUpperCase();
+    if(STATE_NAMES[p.toLowerCase()]) return STATE_NAMES[p.toLowerCase()];
+    if(STATE_ABBR.has(first)&&p.length<=3) return first;
+  }
+  return null;
+}
+function fullState(ab){ return STATE_FULL[ab]||ab; }
+
+/* ===== Trip passport (the traveler's own collection, stored locally) ===== */
+const PASS_LS="routeforge.passport.v1";
+function passRead(){ try{ const a=JSON.parse(localStorage.getItem(PASS_LS)||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function passInitials(n){ return String(n||"?").split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toUpperCase()||"?"; }
+function passTier(n){ return n>=20?"Highway legend":n>=10?"Road warrior":n>=6?"Seasoned road-tripper":n>=3?"Weekend wanderer":n>=1?"Just rolling out":""; }
+function passURL(n,a){ return "/place.html?name="+encodeURIComponent(n)+(a?"&area="+encodeURIComponent(a):""); }
+function renderPassport(){
+  const card=$("passportCard"); if(!card) return;
+  const a=passRead();
+  $("passTier").textContent=a.length?("· "+passTier(a.length)+" · "+a.length+(a.length===1?" stamp":" stamps")):"";
+  if(!a.length){ $("passBody").innerHTML='<div class="pass-empty">No stamps yet. Open any stop’s storybook and tap <b>Collect this stamp</b> — your road-trip passport fills up right here.</div>'; return; }
+  $("passBody").innerHTML='<div class="stamps">'+a.slice().reverse().map((s,i)=>
+    '<a class="stamp" style="--rot:'+(((i*5)%9)-4)+'deg;animation-delay:'+Math.min(i*50,500)+'ms" href="'+esc(passURL(s.name,s.area))+'">'
+    +'<span class="st-ring">'+esc(passInitials(s.name))+'</span>'
+    +'<span class="st-name">'+esc(s.name)+'</span>'
+    +(s.area?'<span class="st-area">'+esc(s.area)+'</span>':'')
+    +(s.at?'<span class="st-date">'+esc(s.at)+'</span>':'')+'</a>').join('')+'</div>';
+}
+
+function renderResearch(){
+  const R=S.research;
+  if(!R||((!R.queries||!R.queries.length)&&(!R.sources||!R.sources.length))){ $("researchCard").classList.add("hidden"); return; }
+  $("srcCount").textContent=(R.sources||[]).length;
+  $("qlist").innerHTML=(R.queries||[]).map(q=>'<span class="q">'+esc(q)+'</span>').join("");
+  $("slist").innerHTML=(R.sources||[]).map(s=>'<a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.title)+'</a>').join("");
+  $("researchCard").classList.remove("hidden");
 }
 
 function renderExport(days){
   if(!S.trip.start||!S.trip.end){ $("exportCard").classList.add("hidden"); return; }
-  const pointsOfDay=[]; // build origin→dest chains
-  let prev=S.trip.start;
-  days.forEach(d=>{
+  let prev=S.trip.start,html="";
+  days.forEach((d,di)=>{
     const names=d.stops.map(s=>s.name+(s.area?", "+s.area:""));
-    pointsOfDay.push({origin:prev, chain:names});
+    const isLast=di===days.length-1;
+    const dest=isLast?S.trip.end:names[names.length-1];
+    const wps=isLast?names:names.slice(0,-1);
+    const url="https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(prev)
+      +"&destination="+encodeURIComponent(dest)
+      +(wps.length?"&waypoints="+encodeURIComponent(wps.slice(0,8).join("|")):"");
+    html+='<a href="'+url+'" target="_blank" rel="noopener">Day '+(di+1)+' <span>→ open in Google Maps</span></a>';
     prev=names[names.length-1]||prev;
-  });
-  let html="";
-  pointsOfDay.forEach((p,di)=>{
-    const isLast=di===pointsOfDay.length-1;
-    const dest=isLast?S.trip.end:p.chain[p.chain.length-1];
-    const wps=isLast?p.chain:p.chain.slice(0,-1);
-    // Google caps ~9 waypoints per link — chunk defensively
-    const chunks=[]; let o=p.origin, list=[...wps];
-    while(true){
-      const take=list.splice(0,8);
-      const last=list.length?take[take.length-1]:dest;
-      const mid=list.length?take.slice(0,-1):take;
-      chunks.push({o, wps:mid, d:last});
-      if(!list.length) break;
-      o=last;
-    }
-    chunks.forEach((c,ci)=>{
-      const url="https://www.google.com/maps/dir/?api=1"
-        +"&origin="+encodeURIComponent(c.o)
-        +"&destination="+encodeURIComponent(c.d)
-        +(c.wps.length?"&waypoints="+encodeURIComponent(c.wps.join("|")):"");
-      html+=`<a href="${url}" target="_blank" rel="noopener">Day ${di+1}${chunks.length>1?" · part "+(ci+1):""} <span>→ open in Google Maps</span></a>`;
-    });
   });
   $("dayLinks").innerHTML=html;
   $("exportCard").classList.remove("hidden");
 }
 
 function onStopAction(e){
-  const id=e.currentTarget.dataset.id, a=e.currentTarget.dataset.a;
+  const id=e.currentTarget.dataset.id,a=e.currentTarget.dataset.a;
   const i=S.trip.stops.findIndex(s=>s.id===id); if(i<0)return;
   if(a==="del") S.trip.stops.splice(i,1);
-  if(a==="up"&&i>0) [S.trip.stops[i-1],S.trip.stops[i]]=[S.trip.stops[i],S.trip.stops[i-1]];
-  if(a==="down"&&i<S.trip.stops.length-1) [S.trip.stops[i+1],S.trip.stops[i]]=[S.trip.stops[i],S.trip.stops[i+1]];
+  if(a==="up"&&i>0){ const t=S.trip.stops[i-1]; S.trip.stops[i-1]=S.trip.stops[i]; S.trip.stops[i]=t; }
+  if(a==="down"&&i<S.trip.stops.length-1){ const t=S.trip.stops[i+1]; S.trip.stops[i+1]=S.trip.stops[i]; S.trip.stops[i]=t; }
   render();
 }
 
-/* =====================================================
-   save / share
-===================================================== */
-const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,60)||"trip";
-async function saveTrip(){
-  if(!S.trip.stops.length){ saveMsg("Nothing to save yet — forge a route first.","err"); return; }
-  if(!store.ok){ saveMsg("Storage isn't available in this environment.","err"); return; }
-  if(!S.trip.name) S.trip.name=($("start").value||"Trip")+" → "+($("end").value||"");
-  const ok=await store.set("rftrip:"+slug(S.trip.name),S.trip);
-  saveMsg(ok?`Saved "${S.trip.name}".`:"Save failed — try again.", ok?"ok":"err");
-  if(ok) refreshTripList();
+function readTrips(){ try{ return JSON.parse(localStorage.getItem(LS)||"{}") }catch(e){ return {} } }
+function writeTrips(o){ try{ localStorage.setItem(LS,JSON.stringify(o)); return true }catch(e){ return false } }
+function saveTrip(){
+  if(!S.trip.stops.length){ saveMsg("Nothing to save yet — research a route first.","err"); return; }
+  const all=readTrips(); all[S.trip.name||"Untitled trip"]=S.trip;
+  const ok=writeTrips(all);
+  saveMsg(ok?'Saved "'+S.trip.name+'".':"Save failed — your browser is blocking storage.", ok?"ok":"err");
+  refreshTripList();
 }
-async function refreshTripList(){
-  if(!store.ok) return;
-  const keys=await store.list("rftrip:");
-  const sel=$("tripList");
-  sel.innerHTML='<option value="">My saved trips…</option>'+
-    keys.map(k=>`<option value="${esc(k)}">${esc(k.replace("rftrip:","").replace(/-/g," "))}</option>`).join("");
+function refreshTripList(){
+  const all=readTrips();
+  $("tripList").innerHTML='<option value="">My saved trips…</option>'+
+    Object.keys(all).map(k=>'<option value="'+esc(k)+'">'+esc(k)+'</option>').join("");
 }
-async function loadTrip(){
+function loadTrip(){
   const k=$("tripList").value; if(!k){ saveMsg("Pick a saved trip first.","err"); return; }
-  const t=await store.get(k);
-  if(!t){ saveMsg("Couldn't load that trip.","err"); return; }
-  applyTrip(t); saveMsg(`Loaded "${t.name}".`,"ok");
+  const t=readTrips()[k]; if(!t){ saveMsg("Couldn't load that trip.","err"); return; }
+  S.trip=Object.assign({},t); S.research=null;
+  $("start").value=t.start||""; $("end").value=t.end||"";
+  $("maxh").value=t.maxHours||6; $("maxhVal").textContent=(t.maxHours||6)+" h/day";
+  setVehicle(t.vehicle||"car",false);
+  $("researchCard").classList.add("hidden");
+  render(); saveMsg('Loaded "'+k+'".',"ok");
+  if($("photos").checked) loadPhotos();
 }
-async function shareTrip(){
-  if(!S.trip.stops.length){ saveMsg("Forge a route before sharing.","err"); return; }
-  if(!store.ok){ saveMsg("Storage isn't available in this environment.","err"); return; }
-  const code="RF-"+Math.random().toString(36).slice(2,6).toUpperCase();
-  const ok=await store.set("rfshared:"+code,S.trip,true);
-  saveMsg(ok?`Share code: ${code} — anyone with it can open this trip.`:"Share failed — try again.", ok?"ok":"err");
-}
-async function loadShared(){
-  const code=$("shareCode").value.trim().toUpperCase();
-  if(!/^RF-[A-Z0-9]{4}$/.test(code)){ saveMsg("Codes look like RF-7K2P.","err"); return; }
-  const t=await store.getShared("rfshared:"+code);
-  if(!t){ saveMsg("No trip found for that code.","err"); return; }
-  applyTrip(t); saveMsg(`Opened shared trip "${t.name}".`,"ok");
-}
-function applyTrip(t){
-  S.trip={ name:t.name||"", vehicle:t.vehicle||"car", maxHours:t.maxHours||6,
-    start:t.start||"", end:t.end||"", lastLeg:t.lastLeg??null,
-    stops:Array.isArray(t.stops)?t.stops:[] };
-  $("start").value=S.trip.start; $("end").value=S.trip.end;
-  $("maxh").value=S.trip.maxHours; $("maxhVal").textContent=S.trip.maxHours+" h/day";
-  setVehicle(S.trip.vehicle,false);
-  render();
+async function copyTrip(){
+  if(!S.trip.stops.length){ saveMsg("Research a route before copying it.","err"); return; }
+  const lines=[S.trip.name,""];
+  S.trip.stops.forEach((s,i)=>{
+    lines.push((i+1)+". "+s.name+(s.area?" — "+s.area:""));
+    if(s.why) lines.push("   "+s.why);
+    if(s.locals_say) lines.push("   Travelers said: "+s.locals_say);
+    if(s.evidence&&s.evidence.length) lines.push("   Source: "+s.evidence[0].url);
+  });
+  try{ await navigator.clipboard.writeText(lines.join("\n")); saveMsg("Trip copied — paste it anywhere.","ok"); }
+  catch(e){ saveMsg("Your browser blocked the clipboard.","err"); }
 }
 function saveMsg(m,cls){ const el=$("saveStatus"); el.textContent=m; el.className="status "+(cls||""); }
 
-/* =====================================================
-   ui wiring
-===================================================== */
+const uid=()=> (crypto.randomUUID?crypto.randomUUID():"id"+Math.random().toString(36).slice(2));
 function setStatus(m,cls,busy){ const el=$("status"); el.textContent=m; el.className="status "+(cls||"")+(busy?" pulse":""); }
-function setVehicle(v,rerender=true){
+function setVehicle(v,rerender){
   S.trip.vehicle=v;
   $("vehCar").classList.toggle("on",v==="car");
   $("vehRV").classList.toggle("on",v==="rv");
-  if(rerender&&S.trip.stops.length) render();
+  if(rerender!==false&&S.trip.stops.length) render();
 }
 $("vehCar").onclick=()=>setVehicle("car");
 $("vehRV").onclick=()=>setVehicle("rv");
@@ -638,26 +642,19 @@ $("maxh").oninput=e=>{ S.trip.maxHours=+e.target.value; $("maxhVal").textContent
 $("forgeBtn").onclick=forgeRoute;
 $("addManual").onclick=()=>{
   const n=$("manualName").value.trim(); if(!n)return;
-  S.trip.stops.push({id:crypto.randomUUID(),name:n.slice(0,80),area:"",why:"",category:"",drive:null,detour:null,confidence:"high",source:"user"});
+  S.trip.stops.push({id:uid(),name:n.slice(0,80),area:"",why:"",drive:null,detour:null,confidence:"high",evidence:[],source:"user",photo:undefined});
   if(!S.trip.start) S.trip.start=$("start").value.trim();
   if(!S.trip.end) S.trip.end=$("end").value.trim();
-  $("manualName").value="";
-  render();
+  $("manualName").value=""; render();
+  if($("photos").checked) loadPhotos();
 };
+$("manualName").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); $("addManual").click(); } });
 $("saveBtn").onclick=saveTrip;
 $("loadBtn").onclick=loadTrip;
-$("shareBtn").onclick=shareTrip;
-$("loadShared").onclick=loadShared;
-
+$("shareBtn").onclick=copyTrip;
+$("leaveDate").addEventListener("change",()=>{ if(S.trip.stops.length) render(); });
 refreshTripList();
-
-/* hosted-demo mode: outside the Claude runtime there's no keyless AI proxy or app storage */
-if(!store.ok){
-  const n=document.createElement("p");
-  n.className="honesty";
-  n.innerHTML='Hosted demo: AI route generation and cloud saving need the full build (server-side API key — coming). Manual stops, day-splitting, and Google Maps export are fully live.';
-  document.querySelector("header").appendChild(n);
-}
+renderPassport();
 </script>
 </body>
 </html>

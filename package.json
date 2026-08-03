@@ -1,0 +1,10 @@
+{
+  "name": "routeforge",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Road trips researched, not invented — static app + serverless research functions.",
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0"
+  }
+}

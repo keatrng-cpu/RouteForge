@@ -4,11 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RouteForge — Forge the drive</title>
-<meta name="description" content="A road-trip planner that never invents your facts. Unlimited stops, live-checked suggestions, honest unknowns, one-tap export to your nav app.">
+<meta name="description" content="A road-trip planner that researches your whole route — Reddit, forums, trip reports — then shows you the hidden gems with photos and sources. Never invents a number.">
 <meta name="theme-color" content="#0E0C0A">
 <meta property="og:title" content="RouteForge — Forge the drive">
-<meta property="og:description" content="Unlimited stops. No account. An AI that can't invent a single number.">
+<meta property="og:description" content="We read the threads so you don't have to. Sourced stops, real photos, honest unknowns.">
 <meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
 <style>
   :root{
     --coal:#0E0C0A; --iron:#151109; --card:#18140F; --ash:#2B241B; --seam:#3A3226;
@@ -21,144 +22,72 @@
   body{background:var(--coal);color:var(--bone);font-family:var(--sans);line-height:1.55;overflow-x:hidden}
   .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
   a{color:inherit}
-
-  /* nav */
-  nav{
-    position:sticky;top:0;z-index:20;
-    background:rgba(14,12,10,.82);backdrop-filter:blur(12px);
-    border-bottom:1px solid var(--ash);
-  }
+  nav{position:sticky;top:0;z-index:20;background:rgba(14,12,10,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--ash)}
   .nav-in{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;max-width:1080px;margin:0 auto}
   .brand{font-weight:800;letter-spacing:-.02em;font-size:18px}
   .brand span{color:var(--ember)}
   .nav-cta{font-size:14px;color:var(--smoke);text-decoration:none;border:1px solid var(--seam);padding:8px 14px;border-radius:9px}
   .nav-cta:hover{color:var(--bone);border-color:var(--ember)}
-
-  /* hero */
   .hero{padding:64px 0 52px;position:relative}
-  .hero::before{
-    content:"";position:absolute;inset:-120px 0 auto 0;height:420px;pointer-events:none;
-    background:radial-gradient(ellipse 60% 60% at 50% 0%, rgba(255,122,41,.13), transparent 70%);
-  }
-  .eyebrow{
-    font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;
-    color:var(--ember);margin-bottom:16px;
-  }
-  h1{
-    font-size:clamp(38px,7.4vw,68px);font-weight:800;letter-spacing:-.045em;line-height:1.02;
-    max-width:17ch;
-  }
-  h1 em{
-    font-style:normal;
-    background:linear-gradient(100deg,var(--ember),var(--molten));
-    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
-  }
+  .hero::before{content:"";position:absolute;inset:-120px 0 auto 0;height:420px;pointer-events:none;background:radial-gradient(ellipse 60% 60% at 50% 0%, rgba(255,122,41,.13), transparent 70%)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--ember);margin-bottom:16px}
+  h1{font-size:clamp(38px,7.4vw,68px);font-weight:800;letter-spacing:-.045em;line-height:1.02;max-width:17ch}
+  h1 em{font-style:normal;background:linear-gradient(100deg,var(--ember),var(--molten));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
   .lede{color:var(--smoke);font-size:clamp(16px,2.2vw,19px);margin-top:20px;max-width:56ch}
   .lede b{color:var(--bone);font-weight:600}
   .ctas{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap}
-  .btn{
-    display:inline-flex;align-items:center;justify-content:center;
-    padding:15px 24px;border-radius:12px;font-weight:650;font-size:16px;
-    text-decoration:none;border:1px solid transparent;transition:transform .08s ease;
-  }
+  .btn{display:inline-flex;align-items:center;justify-content:center;padding:15px 24px;border-radius:12px;font-weight:650;font-size:16px;text-decoration:none;border:1px solid transparent;transition:transform .08s ease}
   .btn:active{transform:scale(.985)}
   .btn-primary{background:linear-gradient(100deg,var(--ember),var(--molten));color:#1A0E04}
   .btn-ghost{border-color:var(--seam);color:var(--bone)}
   .btn-ghost:hover{border-color:var(--ember)}
   .trust{font-family:var(--mono);font-size:12px;color:var(--smoke);margin-top:16px;letter-spacing:.04em}
-
-  /* stat band */
-  .stats{
-    display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
-    background:var(--ash);border:1px solid var(--ash);border-radius:16px;overflow:hidden;
-    margin:44px 0 0;
-  }
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--ash);border:1px solid var(--ash);border-radius:16px;overflow:hidden;margin:44px 0 0}
   .stat{background:var(--iron);padding:22px 16px;text-align:center}
   .stat .n{font-size:clamp(24px,4vw,34px);font-weight:800;letter-spacing:-.03em;color:var(--molten)}
   .stat .l{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke);margin-top:6px}
-
-  /* sections */
   section{padding:64px 0}
   .sec-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ember);margin-bottom:12px}
   h2{font-size:clamp(26px,4.4vw,40px);font-weight:750;letter-spacing:-.035em;line-height:1.1;max-width:20ch}
   .sec-sub{color:var(--smoke);margin-top:14px;max-width:62ch;font-size:16px}
-
-  /* feature grid */
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:34px}
-  .f{
-    background:var(--card);border:1px solid var(--ash);border-radius:16px;padding:22px;
-    transition:border-color .18s ease, transform .18s ease;
-  }
+  .f{background:var(--card);border:1px solid var(--ash);border-radius:16px;padding:22px;transition:border-color .18s ease, transform .18s ease}
   .f:hover{border-color:var(--seam);transform:translateY(-2px)}
   .f h3{font-size:16px;font-weight:700;margin-bottom:8px;letter-spacing:-.01em}
   .f p{font-size:14px;color:var(--smoke);line-height:1.6}
   .f .fx{font-family:var(--mono);font-size:10px;color:var(--ember);letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px}
-
-  /* doctrine */
-  .doctrine{
-    background:linear-gradient(160deg,#1B1409,var(--iron));
-    border:1px solid var(--seam);border-radius:22px;padding:clamp(28px,5vw,52px);
-    position:relative;overflow:hidden;
-  }
-  .doctrine::after{
-    content:"";position:absolute;right:-80px;top:-80px;width:280px;height:280px;border-radius:50%;
-    background:radial-gradient(circle,rgba(255,122,41,.16),transparent 65%);
-  }
+  .doctrine{background:linear-gradient(160deg,#1B1409,var(--iron));border:1px solid var(--seam);border-radius:22px;padding:clamp(28px,5vw,52px);position:relative;overflow:hidden}
+  .doctrine::after{content:"";position:absolute;right:-80px;top:-80px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(255,122,41,.16),transparent 65%)}
   .doctrine h2{max-width:16ch}
   .doctrine p{color:var(--smoke);margin-top:16px;max-width:58ch;font-size:16px}
   .rules{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
-  .rule{
-    font-family:var(--mono);font-size:11px;border:1px solid var(--seam);
-    border-radius:8px;padding:8px 11px;color:var(--molten);background:rgba(0,0,0,.25);
-  }
-
-  /* operators */
+  .rule{font-family:var(--mono);font-size:11px;border:1px solid var(--seam);border-radius:8px;padding:8px 11px;color:var(--molten);background:rgba(0,0,0,.25)}
   .split{display:grid;grid-template-columns:1.1fr .9fr;gap:20px;align-items:center}
   .panel{background:var(--card);border:1px solid var(--ash);border-radius:18px;padding:26px}
   .panel ul{list-style:none;margin-top:16px}
   .panel li{font-size:14px;color:var(--smoke);padding:9px 0;border-bottom:1px solid var(--ash);display:flex;gap:10px}
   .panel li:last-child{border:0}
   .panel li::before{content:"→";color:var(--ember);font-family:var(--mono)}
-
-  /* pricing */
   .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:32px}
-  .tier{
-    background:var(--card);border:1px solid var(--ash);border-radius:18px;padding:26px;
-    display:flex;flex-direction:column;
-  }
+  .tier{background:var(--card);border:1px solid var(--ash);border-radius:18px;padding:26px;display:flex;flex-direction:column}
   .tier.live{border-color:var(--ember);box-shadow:0 0 0 1px rgba(255,122,41,.18), 0 18px 50px -30px rgba(255,122,41,.5)}
-  .flag{
-    font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
-    color:var(--ember);margin-bottom:10px;
-  }
+  .flag{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ember);margin-bottom:10px}
   .flag.soon{color:var(--smoke)}
   .tier .p{font-size:32px;font-weight:800;letter-spacing:-.03em;margin:2px 0 4px}
   .tier .p small{font-size:14px;color:var(--smoke);font-weight:500}
   .tier .d{font-size:14px;color:var(--smoke);margin-bottom:18px;flex:1}
   .tier .btn{width:100%;font-size:15px;padding:13px}
-
-  /* final cta */
   .final{text-align:center;padding:76px 0 84px}
   .final h2{margin:0 auto;max-width:18ch}
   .final .lede{margin:16px auto 0}
   .final .ctas{justify-content:center}
-
   footer{border-top:1px solid var(--ash);padding:30px 0 44px}
   .foot-in{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--smoke)}
   .foot-in a{text-decoration:none}
   .foot-in a:hover{color:var(--bone)}
   .disclaim{font-family:var(--mono);font-size:11px;color:var(--seam);margin-top:16px;line-height:1.6}
-
-  @media(max-width:860px){
-    .grid{grid-template-columns:1fr 1fr}
-    .tiers{grid-template-columns:1fr}
-    .split{grid-template-columns:1fr}
-  }
-  @media(max-width:560px){
-    .grid{grid-template-columns:1fr}
-    .stats{grid-template-columns:1fr 1fr}
-    .ctas .btn{flex:1}
-  }
+  @media(max-width:860px){.grid{grid-template-columns:1fr 1fr}.tiers{grid-template-columns:1fr}.split{grid-template-columns:1fr}}
+  @media(max-width:560px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.ctas .btn{flex:1}}
   @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -174,17 +103,17 @@
 <header class="hero">
   <div class="wrap">
     <div class="eyebrow">Free to use · no card · no account</div>
-    <h1>Road trips that <em>never invent your facts</em>.</h1>
-    <p class="lede">Every planner either hides your stops behind a paywall or hallucinates a drive time it can't know. RouteForge does neither. <b>Unlimited stops, live-checked suggestions, honest unknowns</b> — and one tap into the nav app you already trust.</p>
+    <h1>We read the threads <em>so you don't have to</em>.</h1>
+    <p class="lede">Pick two points and RouteForge researches the whole corridor — Reddit, forums, trip reports — and comes back with the stops locals actually rave about. <b>With photos, with sources, and with a "?" wherever we couldn't confirm something.</b></p>
     <div class="ctas">
-      <a class="btn btn-primary" href="/app.html">Forge a route</a>
+      <a class="btn btn-primary" href="/app.html">Research a route</a>
       <a class="btn btn-ghost" href="/signup.html">Create your account</a>
     </div>
-    <div class="trust">Free forever core · Nothing auto-renews · Your trips stay yours</div>
+    <div class="trust">Free forever core · Nothing auto-renews · Every claim links to its source</div>
 
     <div class="stats">
       <div class="stat"><div class="n">∞</div><div class="l">Stops per trip</div></div>
-      <div class="stat"><div class="n">0</div><div class="l">Card required</div></div>
+      <div class="stat"><div class="n">8</div><div class="l">Live searches per route</div></div>
       <div class="stat"><div class="n">1</div><div class="l">Tap to your nav app</div></div>
       <div class="stat"><div class="n">?</div><div class="l">Shown, never faked</div></div>
     </div>
@@ -194,24 +123,29 @@
 <section>
   <div class="wrap">
     <div class="sec-eyebrow">What it does</div>
-    <h2>The planner, minus the parts everyone hates.</h2>
-    <p class="sec-sub">Each feature below exists because a market leader gets it wrong. We read the reviews so you don't have to live in them.</p>
+    <h2>A researcher, not an autocomplete.</h2>
+    <p class="sec-sub">Every feature below exists because a market leader gets it wrong. We read the reviews so you don't have to live in them.</p>
 
     <div class="grid">
       <div class="f">
-        <div class="fx">Discovery</div>
-        <h3>Stops worth the detour</h3>
-        <p>Tell it what you actually like — weird roadside stuff, good coffee, short hikes — and get stops along your real driving corridor, not a generic top-ten list.</p>
+        <div class="fx">Deep research</div>
+        <h3>It reads Reddit for you</h3>
+        <p>Every route triggers real web searches across Reddit threads, forums and trip reports — segment by segment. The stops that come back are the ones humans got excited about, not the ones with an ad budget.</p>
       </div>
       <div class="f">
-        <div class="fx">Freshness</div>
-        <h3>Live-checked, not shelf-aged</h3>
-        <p>Suggestions are verified against the live web at generation time. No decade-old database quietly recommending a restaurant that closed in 2019.</p>
+        <div class="fx">Storybooks</div>
+        <h3>Every stop is a storybook</h3>
+        <p>Tap any stop and it opens as its own page — a photo gallery, the food travelers rave about, adventures, places to crash, and live prices. Every route researched teaches the library a new storybook, forever.</p>
       </div>
       <div class="f">
-        <div class="fx">Honesty</div>
-        <h3>Confidence on every stop</h3>
-        <p>A three-dot gauge shows how sure the model is that a place exists as described — plus a verify link straight to the map. Trust, but check.</p>
+        <div class="fx">Receipts</div>
+        <h3>Every claim links to its source</h3>
+        <p>Tap the chip on any stop and you land on the actual thread. A full research log shows every query we ran and every page we read. No black box.</p>
+      </div>
+      <div class="f">
+        <div class="fx">Hidden gems</div>
+        <h3>A score for how secret it is</h3>
+        <p>One flame means everyone stops there. Five means you'd only know from a local or a buried comment. Sort your trip by how far off the tourist trail you actually want to be.</p>
       </div>
       <div class="f">
         <div class="fx">Day logic</div>
@@ -221,7 +155,7 @@
       <div class="f">
         <div class="fx">Navigation</div>
         <h3>One tap into Google Maps</h3>
-        <p>We do discovery and day-splitting; your nav app does the turns. Each day exports as a ready-made route, chunked to never hit a waypoint cap.</p>
+        <p>We do the research and day-splitting; your nav app does the turns. Each day exports as a ready-made route, chunked to never hit a waypoint cap.</p>
       </div>
       <div class="f">
         <div class="fx">Big rigs</div>
@@ -229,19 +163,14 @@
         <p>Biases every suggestion toward big-vehicle parking and access, and flags a clearance advisory on each stop. An advisory — we'll tell you plainly when it isn't certified routing.</p>
       </div>
       <div class="f">
-        <div class="fx">Collaboration</div>
-        <h3>Share codes, free for everyone</h3>
-        <p>Send a code, they open the trip. Collaborators never hit a paywall for features you paid for — the whole point of planning together.</p>
-      </div>
-      <div class="f">
         <div class="fx">Control</div>
         <h3>Your stops outrank ours</h3>
-        <p>Add, reorder, or delete anything. The AI proposes; you decide. Your hand-added stops are marked as yours and never overwritten.</p>
+        <p>Add, reorder, or delete anything. The research proposes; you decide. Your hand-added stops are marked as yours and never overwritten.</p>
       </div>
       <div class="f">
         <div class="fx">Memory</div>
         <h3>Trips that survive the drive</h3>
-        <p>Save a route and it's still there next season — with the notes, the order, and the stops you actually loved. Plans shouldn't evaporate at the destination.</p>
+        <p>Save a route and it's still there next season — with the sources, the order, and the stops you actually loved. Plans shouldn't evaporate at the destination.</p>
       </div>
     </div>
   </div>
@@ -252,12 +181,12 @@
     <div class="doctrine">
       <div class="sec-eyebrow">The rule</div>
       <h2>AI that never makes up your numbers.</h2>
-      <p>Every drive time, detour, and day total is either computed, retrieved, or shown as a question mark. Our model can explain a route, order it, and argue for a stop — but it is structurally forbidden from inventing a single figure. When it doesn't know, it says so. That's the rule, and it's the only reason to trust a planner at all.</p>
+      <p>Every drive time, detour, and day total is either computed, retrieved, or shown as a question mark. Our researcher can dig, argue for a stop, and tell you what a thread said — but it is structurally forbidden from inventing a single figure, hour, or price. When it doesn't know, it says so. That's the rule, and it's the only reason to trust a planner at all.</p>
       <div class="rules">
         <span class="rule">EST = model estimate, labeled</span>
         <span class="rule">? = unknown, never guessed</span>
         <span class="rule">No invented hours or prices</span>
-        <span class="rule">Verify link on every stop</span>
+        <span class="rule">No source = flagged unverified</span>
       </div>
     </div>
   </div>
@@ -269,13 +198,13 @@
       <div>
         <div class="sec-eyebrow">For operators</div>
         <h2>Run tours, rentals, or a fleet? This is your back office.</h2>
-        <p class="sec-sub">Stop rebuilding the same itinerary in a spreadsheet for every customer. Forge a route once, brand it, and hand out a code — the customer gets the stops, the day plan, and the nav links on their own phone.</p>
+        <p class="sec-sub">Stop rebuilding the same itinerary in a spreadsheet for every customer. Research a route once, brand it, and hand it out — the customer gets the stops, the photos, the day plan, and the nav links on their own phone.</p>
         <div class="ctas">
           <a class="btn btn-ghost" href="/signup.html?plan=fleet">Ask for early access</a>
         </div>
       </div>
       <div class="panel">
-        <div class="fx" style="font-family:var(--mono);font-size:10px;color:var(--ember);letter-spacing:.14em;text-transform:uppercase">In development</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--ember);letter-spacing:.14em;text-transform:uppercase">In development</div>
         <ul>
           <li>Branded trip codes for your customers</li>
           <li>Reusable route templates per vehicle class</li>
@@ -291,25 +220,25 @@
   <div class="wrap">
     <div class="sec-eyebrow">Pricing</div>
     <h2>Free where it counts. Paid only where it costs us.</h2>
-    <p class="sec-sub">Planning is free forever — capping stops is the original sin of this category. Live AI generation costs real money per route, so that's what a paid tier will eventually cover. Nothing bills today.</p>
+    <p class="sec-sub">Planning is free forever — capping stops is the original sin of this category. Deep research costs real money per route, so that's what a paid tier will eventually cover. Nothing bills today.</p>
 
     <div class="tiers">
       <div class="tier live">
         <div class="flag">Live now</div>
         <div class="p">$0<small> /forever</small></div>
-        <div class="d">Unlimited stops, day-splitting, share codes, saved trips, and one-tap Google Maps export. No card, no account, no expiry.</div>
-        <a class="btn btn-primary" href="/app.html">Forge a route</a>
+        <div class="d">Researched routes, photos, sources, unlimited stops, day-splitting, saved trips, and one-tap Google Maps export. No card, no expiry.</div>
+        <a class="btn btn-primary" href="/app.html">Research a route</a>
       </div>
       <div class="tier">
         <div class="flag soon">Planned</div>
         <div class="p">$4<small> /mo</small></div>
-        <div class="d">Unlimited live-verified AI routes, richer stop research, and offline day packs. Priced to cover the model calls, not to gate your stops.</div>
+        <div class="d">Deeper research passes, more sources per stop, offline day packs, and trips synced across your devices.</div>
         <a class="btn btn-ghost" href="/signup.html?plan=plus">Join the list</a>
       </div>
       <div class="tier">
         <div class="flag soon">Planned</div>
         <div class="p">Fleet<small> — talk to us</small></div>
-        <div class="d">Branded codes, route templates, and bulk export for tour operators, RV rentals, and dealerships.</div>
+        <div class="d">Branded routes, templates, and bulk export for tour operators, RV rentals, and dealerships.</div>
         <a class="btn btn-ghost" href="/signup.html?plan=fleet">Ask for early access</a>
       </div>
     </div>
@@ -319,10 +248,10 @@
 <section class="final">
   <div class="wrap">
     <div class="eyebrow" style="text-align:center">Ready when you are</div>
-    <h2>Pick two points. We'll find what's worth stopping for.</h2>
-    <p class="lede">And when we don't know something, you'll be the first to hear it.</p>
+    <h2>Pick two points. We'll go find what's worth stopping for.</h2>
+    <p class="lede">And when we can't confirm something, you'll be the first to hear it.</p>
     <div class="ctas">
-      <a class="btn btn-primary" href="/app.html">Forge a route</a>
+      <a class="btn btn-primary" href="/app.html">Research a route</a>
       <a class="btn btn-ghost" href="/signup.html">Create your account</a>
     </div>
   </div>
@@ -337,7 +266,7 @@
         <a href="/signup.html">Sign up</a>
       </div>
     </div>
-    <p class="disclaim">RouteForge suggestions are informational. Drive times marked EST are estimates and RV advisories are not certified clearance routing — confirm heights, hours, and road conditions before you drive. A VitaForge Holdings project.</p>
+    <p class="disclaim">RouteForge suggestions are informational and drawn from public web sources. Drive times marked EST are estimates and RV advisories are not certified clearance routing — confirm heights, hours, and road conditions before you drive. Photos via Wikimedia, credited to their pages. A VitaForge Holdings project.</p>
   </div>
 </footer>
 

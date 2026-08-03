@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Storybook — RouteForge</title>
+<meta name="description" content="Every stop is its own storybook — real photos, real food, real adventures, sourced not invented.">
+<meta name="theme-color" content="#0E0C0A">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+<style>
+  :root{
+    --coal:#0E0C0A;--iron:#18140F;--ash:#2B241B;--seam:#3A3226;--smoke:#A89D8E;--bone:#EFE9DF;
+    --ember:#FF7A29;--molten:#FFB25E;--danger:#E5583E;--radius:14px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--coal);color:var(--bone);font-family:var(--sans);line-height:1.5;min-height:100vh}
+  a{color:inherit}
+  .wrap{max-width:720px;margin:0 auto;padding:0 16px}
+
+  /* top nav */
+  .topbar{position:fixed;inset:0 0 auto 0;z-index:30;display:flex;align-items:center;justify-content:space-between;
+    padding:12px 16px 10px;background:linear-gradient(180deg,rgba(10,8,6,.85),rgba(10,8,6,0));pointer-events:none}
+  .topbar a{pointer-events:auto;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--bone);text-decoration:none;background:rgba(14,12,10,.6);border:1px solid rgba(58,50,38,.7);
+    border-radius:9px;padding:8px 12px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  .topbar a:hover{color:var(--molten);border-color:var(--ember)}
+
+  /* scroll odometer — the little car drives as you read */
+  .road{position:fixed;left:0;right:0;top:0;height:4px;z-index:40;background:rgba(58,50,38,.55)}
+  .road::after{content:"";position:absolute;inset:1px 0;background-image:linear-gradient(90deg,var(--seam) 0 12px,transparent 12px 24px);background-size:24px 2px;background-repeat:repeat-x;background-position:0 center;opacity:.7}
+  .car{position:fixed;top:-7px;left:0;z-index:41;font-size:15px;transform:translateX(0);transition:transform .1s linear;filter:drop-shadow(0 0 6px rgba(255,122,41,.7))}
+
+  /* hero */
+  .hero{position:relative;min-height:72vh;display:flex;align-items:flex-end;overflow:hidden;background:radial-gradient(ellipse 90% 70% at 50% 0%, #1d150c, var(--coal))}
+  .hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1s ease;transform:scale(1.04);animation:kenburns 18s ease-in-out infinite alternate}
+  .hero-img.in{opacity:1}
+  @keyframes kenburns{from{transform:scale(1.04) translateY(0)}to{transform:scale(1.12) translateY(-2%)}}
+  .hero-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,12,10,.35) 0%,rgba(14,12,10,.05) 35%,rgba(14,12,10,.55) 70%,var(--coal) 100%)}
+  .hero-in{position:relative;width:100%;padding:96px 0 34px}
+  .hero-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--molten);margin-bottom:10px;text-shadow:0 1px 8px rgba(0,0,0,.8)}
+  .hero h1{font-size:clamp(40px,11vw,76px);font-weight:800;letter-spacing:-.045em;line-height:.98;text-shadow:0 2px 24px rgba(0,0,0,.75)}
+  .ticker{display:inline-flex;align-items:center;gap:9px;margin-top:14px;font-family:var(--mono);font-size:12px;letter-spacing:.05em;
+    color:var(--bone);background:rgba(14,12,10,.62);border:1px solid rgba(255,122,41,.45);border-radius:999px;padding:8px 14px;
+    -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  .ticker .blink{width:8px;height:8px;border-radius:50%;background:var(--ember);animation:pulse 1s infinite alternate}
+  @keyframes pulse{from{opacity:.25}to{opacity:1}}
+  .ticker b{color:var(--molten);font-weight:600}
+  .ticker .est{color:var(--smoke);border:1px solid var(--seam);border-radius:5px;padding:1px 5px;font-size:9px;letter-spacing:.14em}
+  .tagline{margin-top:14px;font-size:clamp(16px,3vw,20px);color:var(--bone);opacity:.95;max-width:34ch;font-weight:600;letter-spacing:-.01em;text-shadow:0 1px 12px rgba(0,0,0,.7)}
+  .hero-credit{font-family:var(--mono);font-size:10px;color:var(--smoke);letter-spacing:.06em;margin-top:16px;opacity:.8}
+  .hero-credit a{color:var(--smoke)}
+
+  /* story */
+  .story{font-size:clamp(16px,2.6vw,19px);line-height:1.65;color:var(--bone);opacity:.92;margin:26px 0 6px;max-width:58ch}
+  .story::first-letter{font-size:2.6em;font-weight:800;float:left;line-height:.9;padding:2px 8px 0 0;color:var(--ember)}
+
+  /* chapters */
+  .chapter{margin-top:44px}
+  .ch-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--ember)}
+  .ch-title{font-size:clamp(24px,5.5vw,34px);font-weight:800;letter-spacing:-.03em;margin-top:4px}
+  .ch-sub{color:var(--smoke);font-size:14px;margin-top:4px;max-width:52ch}
+  .ch-divider{height:4px;margin:14px 0 18px;position:relative;background:transparent}
+  .ch-divider::before{content:"";position:absolute;inset:1px 0;background-image:linear-gradient(90deg,var(--seam) 0 14px,transparent 14px 28px);background-size:28px 2px;background-repeat:repeat-x}
+  .ch-divider::after{content:"🚗";position:absolute;top:-11px;left:0;font-size:13px;opacity:.85}
+
+  /* gallery filmstrip */
+  .gallery{display:grid;grid-auto-flow:column;grid-auto-columns:72%;gap:10px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+  @media(min-width:640px){.gallery{grid-auto-columns:46%}}
+  .g-shot{scroll-snap-align:start;display:block;border-radius:14px;overflow:hidden;border:1px solid var(--seam);aspect-ratio:4/3;background:var(--iron);animation:ignite .5s ease both;position:relative}
+  .g-shot img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s ease}
+  .g-shot:hover img{transform:scale(1.05)}
+  @keyframes ignite{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .g-load,.g-none{font-family:var(--mono);font-size:11px;color:var(--smoke);padding:18px 0;letter-spacing:.06em;line-height:1.7}
+  .gallery-credit{font-family:var(--mono);font-size:10px;color:var(--seam);margin-top:8px;letter-spacing:.06em}
+
+  /* quick live links */
+  .quick{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px}
+  .ql{display:flex;align-items:center;gap:9px;background:var(--iron);border:1px solid var(--seam);border-radius:12px;padding:13px;color:var(--bone);text-decoration:none;font-size:13px;font-weight:600}
+  .ql:hover{border-color:var(--ember);color:var(--molten)}
+  .ql-ic{font-size:17px}
+  .ql-go{margin-left:auto;color:var(--ember);font-family:var(--mono)}
+  .price-note{font-family:var(--mono);font-size:10px;color:var(--smoke);border-left:2px solid var(--ember);padding-left:10px;margin-top:12px;line-height:1.7}
+
+  /* pick cards with photos */
+  .pk{display:grid;grid-template-columns:118px 1fr;gap:0;background:var(--iron);border:1px solid var(--ash);border-radius:14px;margin-bottom:10px;overflow:hidden;animation:ignite .5s ease both}
+  @media(min-width:560px){.pk{grid-template-columns:170px 1fr}}
+  .pk-photo{position:relative;background:var(--coal);min-height:104px}
+  .pk-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s ease}
+  .pk-photo img.in{opacity:1}
+  .pk-photo .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:26px}
+  .pk-photo .ph small{font-family:var(--mono);font-size:8px;letter-spacing:.12em;color:var(--seam);text-transform:uppercase;text-align:center;padding:0 8px;line-height:1.5}
+  .pk-photo a.phlink{text-decoration:none;color:inherit;cursor:pointer}
+  .pk-photo a.phlink small{color:var(--molten)}
+  .pk-photo a.phlink:hover{background:rgba(255,122,41,.06)}
+  .pk-photo .pk-areatag{position:absolute;left:6px;bottom:6px;z-index:2;font-family:var(--mono);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);background:rgba(10,8,6,.72);border:1px solid rgba(255,122,41,.4);border-radius:5px;padding:2px 6px}
+  .pk-body{padding:12px 13px 12px}
+  .pk-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .pk-name{font-size:15px;font-weight:750;letter-spacing:-.01em}
+  .pk-area{font-size:11px;color:var(--smoke);margin-top:1px}
+  .pk-why{font-size:13px;color:var(--bone);opacity:.85;margin-top:5px;line-height:1.45}
+  .pk-links{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
+  .pk-link{font-family:var(--mono);font-size:10px;color:var(--molten);text-decoration:none;border:1px solid #5c4326;border-radius:6px;padding:3px 9px;background:rgba(255,122,41,.06)}
+  .pk-link:hover{background:rgba(255,122,41,.14)}
+  .conf{display:inline-flex;gap:3px;align-items:center;flex:0 0 auto}
+  .dot{width:6px;height:6px;border-radius:50%;border:1px solid var(--ember)}
+  .dot.f{background:var(--ember)}
+  .picks-load,.picks-none{font-family:var(--mono);font-size:11px;color:var(--smoke);padding:8px 0 4px;line-height:1.8}
+
+  /* whispers */
+  .wh{background:var(--iron);border:1px solid var(--ash);border-left:3px solid var(--ember);border-radius:12px;padding:14px 15px;margin-bottom:10px;animation:ignite .5s ease both}
+  .wh q{font-size:14px;font-style:italic;color:var(--bone);opacity:.92;line-height:1.55;quotes:"“" "”"}
+  .wh .src{display:inline-block;margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--molten);text-decoration:none;border:1px solid #5c4326;border-radius:6px;padding:3px 8px;background:rgba(255,122,41,.06)}
+
+  /* provenance + honesty */
+  .prov{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--smoke);margin-top:22px;line-height:1.8}
+  .prov b{color:var(--molten);font-weight:600}
+  .honesty{font-family:var(--mono);font-size:11px;color:var(--smoke);border-left:2px solid var(--ember);padding-left:10px;margin:26px 0 0;line-height:1.7}
+
+  /* library rail */
+  .lib{display:grid;grid-auto-flow:column;grid-auto-columns:64%;gap:10px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+  @media(min-width:640px){.lib{grid-auto-columns:40%}}
+  .lib-card{scroll-snap-align:start;display:block;text-decoration:none;background:var(--iron);border:1px solid var(--ash);border-radius:14px;overflow:hidden;animation:ignite .5s ease both}
+  .lib-card:hover{border-color:var(--ember)}
+  .lib-photo{aspect-ratio:16/10;background:var(--coal);position:relative}
+  .lib-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s ease}
+  .lib-photo img.in{opacity:1}
+  .lib-photo .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:30px}
+  .lib-body{padding:11px 13px 13px}
+  .lib-name{font-size:15px;font-weight:750;letter-spacing:-.01em}
+  .lib-tag{font-size:12px;color:var(--smoke);margin-top:3px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .lib-go{font-family:var(--mono);font-size:10px;color:var(--ember);letter-spacing:.14em;text-transform:uppercase;margin-top:8px;display:block}
+
+  /* actions row — listen + postcard */
+  .actions{display:flex;flex-wrap:wrap;gap:9px;margin:18px 0 2px}
+  .act{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--bone);background:var(--iron);border:1px solid var(--seam);border-radius:999px;padding:9px 15px;cursor:pointer;transition:border-color .18s,color .18s,background .18s}
+  .act:hover{border-color:var(--ember);color:var(--molten)}
+  .act.on{border-color:var(--ember);color:var(--coal);background:var(--ember);font-weight:600}
+  .act .ic{font-size:14px}
+  .act[disabled]{opacity:.45;cursor:default;pointer-events:none}
+  .act .bars{display:inline-flex;gap:2px;align-items:flex-end;height:12px}
+  .act .bars i{width:2px;height:5px;background:currentColor;border-radius:1px;animation:eq .9s ease-in-out infinite}
+  .act .bars i:nth-child(2){animation-delay:.15s}.act .bars i:nth-child(3){animation-delay:.3s}.act .bars i:nth-child(4){animation-delay:.45s}
+  @keyframes eq{0%,100%{height:4px}50%{height:12px}}
+  .act.stamped{border-color:var(--ember);color:var(--molten)}
+
+  /* confetti + toast (stamp collected) */
+  .confetti{position:fixed;z-index:60;width:9px;height:9px;border-radius:2px;pointer-events:none;will-change:transform,opacity;animation:conffall .95s ease-out forwards}
+  @keyframes conffall{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);z-index:61;background:var(--iron);border:1px solid var(--ember);
+    color:var(--bone);font-family:var(--mono);font-size:12px;letter-spacing:.04em;padding:11px 16px;border-radius:12px;opacity:0;
+    transition:opacity .25s ease,transform .25s ease;box-shadow:0 10px 34px rgba(0,0,0,.55);max-width:86vw;text-align:center}
+  .toast.in{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* conditions & light band */
+  .cond{margin-top:26px;background:linear-gradient(180deg,var(--iron),rgba(24,20,15,.35));border:1px solid var(--ash);border-radius:16px;padding:16px 16px 15px;animation:ignite .5s ease both}
+  .cond-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .cond-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--ember)}
+  .cond-date{font-family:var(--mono);font-size:11px;color:var(--bone);background:var(--coal);border:1px solid var(--seam);border-radius:8px;padding:5px 9px;color-scheme:dark}
+  .cond-date::-webkit-calendar-picker-indicator{filter:invert(.7) sepia(1) saturate(5) hue-rotate(-12deg);cursor:pointer}
+  .cond-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:440px){.cond-grid{grid-template-columns:1fr}}
+  .cond-cell{background:var(--coal);border:1px solid var(--seam);border-radius:12px;padding:12px 13px;min-height:80px}
+  .cond-tag{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--smoke)}
+  .cond-tag b{color:var(--molten);font-weight:600}
+  .cond-main{display:flex;align-items:center;gap:11px;margin-top:7px}
+  .cond-emoji{font-size:27px;line-height:1}
+  .cond-temp{font-size:21px;font-weight:800;letter-spacing:-.02em}
+  .cond-temp small{font-size:13px;font-weight:600;color:var(--smoke)}
+  .cond-desc{font-size:12px;color:var(--smoke);margin-top:2px;line-height:1.4}
+  .cond-suns{display:flex;gap:18px;margin-top:8px}
+  .cond-suns .s{font-size:15px;font-weight:750;letter-spacing:-.01em}
+  .cond-suns .s small{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--smoke);font-weight:400;margin-top:2px}
+  .cond-golden{margin-top:12px;display:flex;gap:11px;align-items:flex-start;
+    background:radial-gradient(130% 150% at 0% 0%,rgba(255,178,94,.17),rgba(255,122,41,.04));
+    border:1px solid rgba(255,122,41,.35);border-radius:12px;padding:12px 13px}
+  .cond-golden .gic{font-size:20px;line-height:1.2}
+  .cond-golden .gtx{font-size:13.5px;line-height:1.5;color:var(--bone)}
+  .cond-golden .gtx b{color:var(--molten);font-weight:700}
+  .cond-note{font-family:var(--mono);font-size:10px;color:var(--smoke);margin-top:10px;letter-spacing:.03em;line-height:1.6}
+
+  .foot{text-align:center;color:var(--smoke);font-family:var(--mono);font-size:11px;margin:40px 0 46px;letter-spacing:.08em;line-height:2}
+  .foot a{color:var(--smoke)}
+  .hidden{display:none}
+  main{padding-bottom:10px}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}.hero-img{transform:none}}
+</style>
+</head>
+<body>
+
+<div class="road" aria-hidden="true"></div>
+<div class="car" id="odoCar" aria-hidden="true">🚗</div>
+
+<div class="topbar">
+  <a href="#" id="backLink">← Back to route</a>
+  <a href="/">RouteForge</a>
+</div>
+
+<header class="hero" id="hero">
+  <img class="hero-img" id="heroImg" alt="">
+  <div class="hero-scrim"></div>
+  <div class="hero-in wrap">
+    <div class="hero-eyebrow" id="heroEyebrow">DESTINATION STORYBOOK</div>
+    <h1 id="placeName">…</h1>
+    <div class="ticker hidden" id="ticker"><span class="blink"></span><span id="tickerText"></span><span class="est">EST</span></div>
+    <p class="tagline" id="tagline"></p>
+    <div class="hero-credit" id="heroCredit"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="story" id="story"></p>
+
+  <div class="actions" id="actions" aria-label="Story actions"></div>
+
+  <section class="cond hidden" id="conditions">
+    <div class="cond-head">
+      <span class="cond-eyebrow">Conditions &amp; light</span>
+      <input type="date" id="condDate" class="cond-date" aria-label="Pick your arrival date">
+    </div>
+    <div class="cond-grid">
+      <div class="cond-cell" id="condWx"></div>
+      <div class="cond-cell" id="condSun"></div>
+    </div>
+    <div class="cond-golden hidden" id="condGolden"></div>
+    <div class="cond-note" id="condNote"></div>
+  </section>
+
+  <section class="chapter" id="chGallery">
+    <div class="ch-eyebrow">Chapter 01</div>
+    <h2 class="ch-title">First look</h2>
+    <p class="ch-sub">Real photos of the real place — every frame links back to where it came from.</p>
+    <div class="ch-divider" aria-hidden="true"></div>
+    <div class="gallery" id="gallery"><div class="g-load">DEVELOPING THE FILM…</div></div>
+    <div class="gallery-credit" id="galleryCredit"></div>
+  </section>
+
+  <section class="chapter">
+    <div class="ch-eyebrow">Chapter 02</div>
+    <h2 class="ch-title">Go live — right now</h2>
+    <p class="ch-sub">These open real, current listings with real prices. Nothing here is guessed.</p>
+    <div class="ch-divider" aria-hidden="true"></div>
+    <div class="quick" id="quick"></div>
+    <p class="price-note">Prices &amp; hours live at the source — every button opens current listings. RouteForge never invents a number.</p>
+  </section>
+
+  <section class="chapter hidden" id="chEat">
+    <div class="ch-eyebrow">Chapter 03</div>
+    <h2 class="ch-title">Fuel up</h2>
+    <p class="ch-sub">The plates travelers actually talk about near this stop.</p>
+    <div class="ch-divider" aria-hidden="true"></div>
+    <div id="eatList"></div>
+  </section>
+
+  <section class="chapter hidden" id="chDo">
+    <div class="ch-eyebrow">Chapter 04</div>
+    <h2 class="ch-title">Get out of the car</h2>
+    <p class="ch-sub">The reasons your legs will forgive the drive.</p>
+    <div class="ch-divider" aria-hidden="true"></div>
+    <div id="doList"></div>
+  </section>
+
+  <section class="chapter hidden" id="chStay">
+    <div class="ch-eyebrow">Chapter 05</div>
+    <h2 class="ch-title">Crash for the night</h2>
+    <p class="ch-sub">Where the story pauses — rates open live so the numbers are always real.</p>
+    <div class="ch-divider" aria-hidden="true"></div>
+    <div id="stayList"></div>
+  </section>
+
+  <section class="chapter hidden" id="chWhisper">
+    <div class="ch-eyebrow">Chapter 06</div>
+    <h2 class="ch-title">What travelers whisper</h2>
+    <p class="ch-sub">Paraphrased from real threads — tap through to the source.</p>
+    <div class="ch-divider" aria-hidden="true"></div>
+    <div id="whisperList"></div>
+  </section>
+
+  <div class="picks-load" id="picksState"></div>
+  <p class="prov" id="prov"></p>
+
+  <section class="chapter" id="chLib">
+    <div class="ch-eyebrow">Keep going</div>
+    <h2 class="ch-title">More storybooks</h2>
+    <p class="ch-sub">Every route anyone researches teaches RouteForge a new place — the library never stops growing.</p>
+    <div class="ch-divider" aria-hidden="true"></div>
+    <div class="lib" id="lib"><div class="g-load">OPENING THE LIBRARY…</div></div>
+  </section>
+
+  <p class="honesty">Photos come from Wikimedia and link to their source pages. Curated picks are researched from Reddit, X, forums and the web — each carries a confidence gauge, and a place with no photo says so instead of faking one. <b style="color:var(--molten)">EST</b> = estimate. Prices are never invented; the links show you the live numbers. Weather is a live <b style="color:var(--molten)">forecast</b> from Open-Meteo — a forecast, not a promise; sunrise, sunset and golden-hour times are exact astronomy for the date you pick.</p>
+
+  <p class="foot">ROUTEFORGE · SOURCED, NOT INVENTED · <a href="/app.html">PLAN A ROUTE</a></p>
+</main>
+
+<script>
+const SB_BASE="https://lamdouidiiuqtplqhsdz.supabase.co/rest/v1";
+const SB_KEY="sb_publishable_RrMGUSXa0vGBXTzQ4ueORg_IjTLFRv-";
+const SB_HEADERS={"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY};
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||"").toLowerCase().replace(/\s+/g," ").trim();
+const keyFor=(n,a)=>(norm(n)+"|"+norm(a)).slice(0,240);
+const mapsSearch=q=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q);
+const hotelsUrl=q=>"https://www.google.com/travel/search?q="+encodeURIComponent(q);
+const gSearch=q=>"https://www.google.com/search?q="+encodeURIComponent(q);
+
+/* ---------- params ---------- */
+const P=new URLSearchParams(location.search);
+const NAME=(P.get("name")||"").slice(0,120).trim();
+const AREA=(P.get("area")||"").slice(0,120).trim();
+const ETA=Math.max(0,Math.min(parseInt(P.get("eta"),10)||0,100000));
+const FROM=(P.get("from")||"").slice(0,120).trim();
+const RV=P.get("vehicle")==="rv";
+if(!NAME){ location.replace("/app.html"); }
+const WHERE=NAME+(AREA?", "+AREA:"");
+
+/* ---------- shell ---------- */
+document.title=NAME+" — a RouteForge storybook";
+$("placeName").textContent=NAME||"…";
+$("backLink").href="/app.html";
+$("backLink").addEventListener("click",e=>{ if(history.length>1){ e.preventDefault(); history.back(); } });
+if(ETA>0){
+  const h=Math.floor(ETA/60),m=ETA%60;
+  $("tickerText").innerHTML="~<b>"+(h?h+"h ":"")+(m?m+"m":(h?"":"0m"))+"</b> of “are we there yet?” left"+(FROM?" · from "+esc(FROM):"");
+  $("ticker").classList.remove("hidden");
+  $("heroEyebrow").textContent="NEXT STOP ON YOUR ROUTE";
+}else if(FROM){
+  $("heroEyebrow").textContent="THE DESTINATION · FROM "+FROM.toUpperCase().slice(0,40);
+}
+$("quick").innerHTML=quickLinks();
+
+function quickLinks(){
+  const stay = RV
+    ? ["🏕","RV parks & campgrounds", mapsSearch("RV parks and campgrounds near "+WHERE)]
+    : ["🛏","Places to stay & prices", hotelsUrl("hotels in "+WHERE)];
+  return [
+    ["🍽","Food & restaurants", mapsSearch("restaurants in "+WHERE)],
+    stay,
+    ["🎟","Things to do", mapsSearch("things to do in "+WHERE)],
+    ["📍","Open in Maps", mapsSearch(WHERE)]
+  ].map(a=>'<a class="ql" href="'+a[2]+'" target="_blank" rel="noopener"><span class="ql-ic">'+a[0]+'</span>'+esc(a[1])+'<span class="ql-go">↗</span></a>').join("");
+}
+
+/* ---------- odometer car ---------- */
+(function(){
+  const car=$("odoCar");
+  function move(){
+    const max=document.documentElement.scrollHeight-innerHeight;
+    const pct=max>0?Math.min(1,scrollY/max):0;
+    car.style.transform="translateX("+(pct*(innerWidth-26))+"px)";
+  }
+  addEventListener("scroll",move,{passive:true}); addEventListener("resize",move); move();
+})();
+
+/* ---------- photo relevance ----------
+   Wikipedia's image search returns the lead photo of whatever page ranks
+   first for the text — which for a small business is usually a wildly wrong
+   page (a cafe → a senator, a pizzeria → a state flag). We only trust a
+   photo when the matched Wikipedia PAGE TITLE genuinely corresponds to the
+   place. Deterministic string matching, never the model. */
+const PHOTO_STOP=new Set(("the a an of and or on at in near cafe café restaurant restaurants grill grille bar pub tavern saloon pizza pizzeria co inc llc ltd company hotel motel lodge inn resort spa park state national campground campgrounds rv diner kitchen house natural foods food coffee brewery brewing bakery deli grocery market shop store eatery bistro trail trails overlook point tours tour").split(" "));
+function pTokens(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(Boolean); }
+function pDistinct(name){ return pTokens(name).filter(t=>t.length>=3 && !PHOTO_STOP.has(t)); }
+function titleRelevant(name,title,strict){
+  const d=pDistinct(name); if(!d.length) return false;
+  const tt=pTokens(title);
+  const has=t=>tt.some(x=>x===t||(x.startsWith(t)&&x.length-t.length<=3)||(t.startsWith(x)&&t.length-x.length<=3));
+  const matched=d.filter(has);
+  if(!matched.length) return false;
+  if(strict){
+    const need=d.length<=1?1:Math.max(2,Math.ceil(d.length*0.6));
+    if(matched.length<need) return false;
+    if(d.length===1 && d[0].length<5) return false;
+    return true;
+  }
+  return matched.some(t=>t.length>=4) || matched.length>=2;
+}
+
+/* ---------- wikimedia ---------- */
+async function wikiImages(q,limit,size,matchName,strict){
+  const url="https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*"
+    +"&generator=search&gsrsearch="+encodeURIComponent(q)+"&gsrlimit="+(limit||6)
+    +"&prop=pageimages|info&inprop=url&piprop=thumbnail&pithumbsize="+(size||800);
+  try{
+    const r=await fetch(url); if(!r.ok) return [];
+    const j=await r.json();
+    const pages=j&&j.query&&j.query.pages; if(!pages) return [];
+    const seen=new Set(),out=[];
+    Object.values(pages).sort((a,b)=>(a.index||0)-(b.index||0)).forEach(p=>{
+      if(p.thumbnail&&p.thumbnail.source&&!seen.has(p.thumbnail.source)){
+        seen.add(p.thumbnail.source);
+        out.push({src:p.thumbnail.source,page:p.fullurl||null,title:p.title||q});
+      }
+    });
+    return matchName ? out.filter(o=>titleRelevant(matchName,o.title,strict)) : out;
+  }catch(e){ return []; }
+}
+const seePhotos=(name,area)=>mapsSearch(name+(area?" "+area:""));
+
+// Wikimedia Commons file search — far broader than Wikipedia articles (many
+// hotels, buildings, trailheads have a Commons photo without an article).
+// Still title-verified so we never show an unrelated file.
+async function commonsImage(name,area){
+  const q=[name,area].filter(Boolean).join(" ");
+  const url="https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*"
+    +"&generator=search&gsrnamespace=6&gsrsearch="+encodeURIComponent(q)+"&gsrlimit=8"
+    +"&prop=imageinfo&iiprop=url&iiurlwidth=640";
+  try{
+    const r=await fetch(url); if(!r.ok) return null;
+    const j=await r.json();
+    const pages=j&&j.query&&j.query.pages; if(!pages) return null;
+    const list=Object.values(pages).sort((a,b)=>(a.index||0)-(b.index||0));
+    for(const p of list){
+      const ii=p.imageinfo&&p.imageinfo[0];
+      const fileTitle=String(p.title||"").replace(/^File:/i,"").replace(/\.[a-z0-9]+$/i,"");
+      if(ii&&(ii.thumburl||ii.url)&&titleRelevant(name,fileTitle,true)){
+        return {src:ii.thumburl||ii.url, page:ii.descriptionurl||null, title:name};
+      }
+    }
+    return null;
+  }catch(e){ return null; }
+}
+// If /api/photo (Google Places, when a key is configured) is available, it
+// returns the exact business's real photo. Keyless deploy → 404/503 → we fall
+// back to the verified free sources below.
+async function placesImage(name,area){
+  try{
+    const r=await fetch("/api/photo?name="+encodeURIComponent(name)+"&area="+encodeURIComponent(area||""));
+    if(!r.ok) return null;
+    const j=await r.json();
+    return (j&&j.src)?{src:j.src,page:j.page||null,title:name,exact:true}:null;
+  }catch(e){ return null; }
+}
+
+/* ---------- hero + gallery ---------- */
+let HERO_SRC=null, HERO_TITLE=null;
+(async function(){
+  const shots=await wikiImages(WHERE,10,1000,NAME,false);
+  if(shots.length){
+    const hero=shots[0];
+    HERO_SRC=hero.src; HERO_TITLE=hero.title||NAME;
+    const img=$("heroImg");
+    img.src=hero.src; img.alt=NAME;
+    img.onload=()=>img.classList.add("in");
+    $("heroCredit").innerHTML='PHOTO: WIKIMEDIA · <a href="'+esc(hero.page||"#")+'" target="_blank" rel="noopener">'+esc(hero.title)+'</a>';
+  }else{
+    // No verified encyclopedic photo — never show a wrong one; link to real photos.
+    $("heroCredit").innerHTML='<a href="'+esc(seePhotos(NAME,AREA))+'" target="_blank" rel="noopener">SEE REAL PHOTOS OF '+esc(NAME.toUpperCase())+' ↗</a>';
+  }
+  const strip=shots.slice(1);
+  if(!strip.length){
+    $("gallery").innerHTML='<div class="g-none">No verified Wikimedia photos for this exact spot yet — we won\'t show you the wrong place.<br><a class="verify" style="color:var(--molten)" href="'+esc(seePhotos(NAME,AREA))+'" target="_blank" rel="noopener">See real photos on the map ↗</a></div>';
+    return;
+  }
+  $("gallery").innerHTML=strip.map((s,i)=>'<a class="g-shot" href="'+esc(s.page||"#")+'" target="_blank" rel="noopener" style="animation-delay:'+(i*70)+'ms"><img loading="lazy" alt="'+esc(s.title)+'" src="'+esc(s.src)+'"></a>').join("");
+  $("galleryCredit").textContent="PHOTOS: WIKIMEDIA — TAP ANY FRAME FOR ITS SOURCE PAGE";
+})();
+
+/* ---------- storybook data: /api/place → brain → links-only ---------- */
+const sPick=p=>({
+  name:String((p&&p.name)||"").slice(0,100),
+  area:String((p&&p.area)||"").slice(0,100),
+  why:String((p&&p.why)||"").slice(0,160),
+  confidence:["high","medium","low"].includes(p&&p.confidence)?p.confidence:"low"
+});
+const sWhisper=w=>({
+  quote:String((w&&w.quote)||"").slice(0,240),
+  source:String((w&&w.source)||"source").slice(0,60),
+  url:/^https?:\/\//.test(String((w&&w.url)||""))?String(w.url).slice(0,500):null
+});
+function sData(d){
+  d=d&&typeof d==="object"?d:{};
+  return {
+    tagline:String(d.tagline||"").slice(0,180),
+    story:String(d.story||"").slice(0,700),
+    eat:(Array.isArray(d.eat)?d.eat:[]).slice(0,6).map(sPick).filter(p=>p.name),
+    do:(Array.isArray(d.do)?d.do:[]).slice(0,6).map(sPick).filter(p=>p.name),
+    stay:(Array.isArray(d.stay)?d.stay:[]).slice(0,6).map(sPick).filter(p=>p.name),
+    whispers:(Array.isArray(d.whispers)?d.whispers:[]).slice(0,5).map(sWhisper).filter(w=>w.quote),
+    origin:d.origin==="seed"?"seed":"research"
+  };
+}
+
+async function brainGet(){
+  for(const k of [keyFor(NAME,AREA), keyFor(NAME,"")]){
+    try{
+      const r=await fetch(SB_BASE+"/routeforge_places?key=eq."+encodeURIComponent(k)+"&select=data,created_at&limit=1",{headers:SB_HEADERS});
+      if(!r.ok) continue;
+      const j=await r.json();
+      if(Array.isArray(j)&&j[0]&&j[0].data) return {data:j[0].data, at:j[0].created_at, via:"brain"};
+    }catch(e){}
+  }
+  return null;
+}
+
+(async function loadStory(){
+  $("picksState").textContent="READING THE THREADS — FOOD, ADVENTURES & PLACES TO CRASH LOADING…";
+  let got=null;
+  try{
+    const res=await fetch("/api/place",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({name:NAME,area:AREA,vehicle:RV?"rv":"car"})});
+    if(res.ok){
+      const j=await res.json();
+      got={data:j, at:j.researched_at||null, via:j.cached?"brain":"fresh"};
+    }else if(res.status!==503){ /* other errors: fall through to brain */ }
+  }catch(e){}
+  if(!got) got=await brainGet();
+  if(!got){
+    $("picksState").innerHTML="THIS STOP ISN'T IN THE BRAIN YET — the research engine needs its key. The live buttons in Chapter 02 already show real food, stays &amp; prices.";
+    $("prov").textContent="";
+    return;
+  }
+  const d=sData(got.data);
+  if(d.tagline) $("tagline").textContent=d.tagline;
+  if(d.story) $("story").textContent=d.story;
+  renderPicks("chEat","eatList",d.eat,"eat");
+  renderPicks("chDo","doList",d.do,"do");
+  renderPicks("chStay","stayList",d.stay,"stay");
+  renderWhispers(d.whispers);
+  $("picksState").textContent="";
+  $("prov").innerHTML= got.via==="fresh"
+    ? "<b>FRESHLY RESEARCHED</b> from Reddit, X, forums &amp; the web — and now locked into the RouteForge brain for every traveler after you."
+    : "<b>FROM THE ROUTEFORGE BRAIN</b> — researched once, remembered forever."+(got.at?" LEARNED "+esc(String(got.at).slice(0,10)):"");
+})();
+
+/* ================= Living stops: weather + golden-hour light =================
+   All keyless, all real: geocoding + the day's forecast from Open-Meteo, and
+   sunrise/sunset/golden-hour computed with exact astronomy (SunCalc algorithm,
+   MIT) so the timing is honest for ANY date — never invented, never an LLM. */
+const SUN=(function(){
+  const rad=Math.PI/180, dayMs=864e5, J1970=2440588, J2000=2451545, e=rad*23.4397;
+  const toDays=d=>d.valueOf()/dayMs-0.5+J1970-J2000;
+  const M=d=>rad*(357.5291+0.98560028*d);
+  const L=m=>m+rad*(1.9148*Math.sin(m)+0.02*Math.sin(2*m)+0.0003*Math.sin(3*m))+rad*102.9372+Math.PI;
+  const dec=l=>Math.asin(Math.sin(e)*Math.sin(l));
+  const J0=0.0009;
+  const approx=(Ht,lw,n)=>J0+(Ht+lw)/(2*Math.PI)+n;
+  const transitJ=(ds,m,l)=>J2000+ds+0.0053*Math.sin(m)-0.0069*Math.sin(2*l);
+  const ha=(h,phi,d)=>Math.acos((Math.sin(h)-Math.sin(phi)*Math.sin(d))/(Math.cos(phi)*Math.cos(d)));
+  const fromJ=j=>new Date((j+0.5-J1970)*dayMs);
+  return function(date,lat,lng){
+    const lw=rad*-lng, phi=rad*lat, d=toDays(date), n=Math.round(d-J0-lw/(2*Math.PI));
+    const ds=approx(0,lw,n), m=M(ds), l=L(m), de=dec(l), Jnoon=transitJ(ds,m,l);
+    function evt(angle){
+      const w=ha(angle*rad,phi,de);
+      if(isNaN(w)) return {rise:new Date(NaN),set:new Date(NaN)};
+      const Jset=transitJ(approx(w,lw,n),m,l);
+      return {set:fromJ(Jset),rise:fromJ(Jnoon-(Jset-Jnoon))};
+    }
+    const s=evt(-0.833), g=evt(6);
+    return {sunrise:s.rise,sunset:s.set,goldenHourStart:g.set};
+  };
+})();
+function wxCode(code){
+  const m={0:['☀️','Clear sky'],1:['🌤️','Mainly clear'],2:['⛅','Partly cloudy'],3:['☁️','Overcast'],
+    45:['🌫️','Fog'],48:['🌫️','Rime fog'],51:['🌦️','Light drizzle'],53:['🌦️','Drizzle'],55:['🌧️','Heavy drizzle'],
+    56:['🌧️','Freezing drizzle'],57:['🌧️','Freezing drizzle'],61:['🌧️','Light rain'],63:['🌧️','Rain'],65:['🌧️','Heavy rain'],
+    66:['🌧️','Freezing rain'],67:['🌧️','Freezing rain'],71:['🌨️','Light snow'],73:['❄️','Snow'],75:['❄️','Heavy snow'],
+    77:['❄️','Snow grains'],80:['🌦️','Light showers'],81:['🌦️','Showers'],82:['⛈️','Violent showers'],
+    85:['🌨️','Snow showers'],86:['🌨️','Snow showers'],95:['⛈️','Thunderstorm'],96:['⛈️','Thunderstorm & hail'],99:['⛈️','Thunderstorm & hail']};
+  return m[code]||['🌡️','—'];
+}
+function fmtTime(d,tz){ try{ return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:tz}); }catch(e){ return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}); } }
+function fmtDate(ds){ const d=new Date(ds+'T12:00:00Z'); return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',timeZone:'UTC'}); }
+function todayISO(tz){ try{ return new Date().toLocaleDateString('en-CA',{timeZone:tz}); }catch(e){ return new Date().toLocaleDateString('en-CA'); } }
+
+async function geocode(){
+  const cand=[]; if(AREA) cand.push(AREA.split(',')[0].trim());
+  cand.push(NAME); if(AREA) cand.push(NAME+' '+AREA.split(',')[0].trim());
+  for(const q of cand){ if(!q) continue;
+    try{
+      const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&format=json&name='+encodeURIComponent(q));
+      if(!r.ok) continue; const j=await r.json(); const g=j&&j.results&&j.results[0];
+      if(g&&typeof g.latitude==='number') return {lat:g.latitude,lon:g.longitude,tz:g.timezone||null,label:[g.name,g.admin1].filter(Boolean).join(', ')};
+    }catch(e){}
+  }
+  return null;
+}
+function renderWx(ds,wx,tz){
+  const cell=$("condWx"), note=$("condNote");
+  if(wx){ const idx=wx.time.indexOf(ds);
+    if(idx>=0){
+      const [emo,txt]=wxCode(wx.weather_code[idx]);
+      const hi=Math.round(wx.temperature_2m_max[idx]), lo=Math.round(wx.temperature_2m_min[idx]);
+      cell.innerHTML='<div class="cond-tag">🌦 <b>Forecast</b> · '+esc(fmtDate(ds))+'</div>'
+        +'<div class="cond-main"><span class="cond-emoji">'+emo+'</span><span><span class="cond-temp">'+hi+'°<small> / '+lo+'°F</small></span><div class="cond-desc">'+esc(txt)+'</div></span></div>';
+      note.textContent='Live forecast via Open-Meteo — a forecast, not a promise. Sun & golden-hour times are exact astronomy.';
+      return;
+    }
+  }
+  cell.innerHTML='<div class="cond-tag">🌦 Weather</div><div class="cond-desc" style="margin-top:8px">A live forecast appears here within 16 days of your visit — the sun times stay exact for any date.</div>';
+  note.textContent='Sun & golden-hour times are exact astronomy for the date you pick.';
+}
+function renderSun(ds,geo,tz){
+  const cell=$("condSun"), gold=$("condGolden");
+  const t=SUN(new Date(ds+'T12:00:00Z'),geo.lat,geo.lon);
+  if(!t||isNaN(t.sunset)||isNaN(t.sunrise)){
+    cell.innerHTML='<div class="cond-tag">☀️ Sun</div><div class="cond-desc" style="margin-top:8px">The sun barely sets here on this date — endless golden light.</div>';
+    gold.classList.add('hidden'); return;
+  }
+  const rise=fmtTime(t.sunrise,tz), set=fmtTime(t.sunset,tz);
+  cell.innerHTML='<div class="cond-tag">☀️ Sun'+(geo.label?' · '+esc(geo.label):'')+'</div>'
+    +'<div class="cond-suns"><div class="s">'+esc(rise)+'<small>Sunrise</small></div><div class="s">'+esc(set)+'<small>Sunset</small></div></div>';
+  if(t.goldenHourStart&&!isNaN(t.goldenHourStart)){
+    const gh=fmtTime(t.goldenHourStart,tz), mins=Math.max(1,Math.round((t.sunset-t.goldenHourStart)/60000));
+    gold.innerHTML='<span class="gic">✨</span><span class="gtx">Chase the light: pull in by <b>'+esc(gh)+'</b> and you\'ll catch golden hour — about <b>'+mins+' minutes</b> of warm light before the sun sets at <b>'+esc(set)+'</b>.</span>';
+    gold.classList.remove('hidden');
+  }else gold.classList.add('hidden');
+}
+(async function initConditions(){
+  const geo=await geocode(); if(!geo) return;
+  let wx=null, tz=geo.tz;
+  try{
+    const r=await fetch('https://api.open-meteo.com/v1/forecast?timezone=auto&forecast_days=16&temperature_unit=fahrenheit&daily=weather_code,temperature_2m_max,temperature_2m_min&latitude='+geo.lat+'&longitude='+geo.lon);
+    if(r.ok){ const j=await r.json(); if(j&&j.daily&&Array.isArray(j.daily.time)){ wx=j.daily; if(j.timezone) tz=j.timezone; } }
+  }catch(e){}
+  if(!tz) tz=undefined;
+  $("conditions").classList.remove('hidden');
+  const dateEl=$("condDate"), today=todayISO(tz);
+  dateEl.value=today; dateEl.min=today;
+  const render=()=>{ const ds=dateEl.value||today; renderWx(ds,wx,tz); renderSun(ds,geo,tz); };
+  dateEl.addEventListener('change',render); render();
+})();
+
+/* ================= Read-aloud narration (Web Speech, keyless) ================= */
+function initNarration(host){
+  if(!('speechSynthesis' in window)||typeof SpeechSynthesisUtterance==='undefined') return;
+  const btn=document.createElement('button'); btn.className='act'; btn.type='button';
+  btn.innerHTML='<span class="ic">🔊</span><span class="lbl">Read me the story</span>';
+  let on=false;
+  const idle=()=>{ on=false; btn.classList.remove('on'); btn.querySelector('.ic').textContent='🔊'; btn.querySelector('.lbl').textContent='Read me the story'; };
+  const play=()=>{ on=true; btn.classList.add('on'); btn.querySelector('.ic').textContent='⏹'; btn.querySelector('.lbl').textContent='Stop'; };
+  btn.addEventListener('click',()=>{
+    if(on){ speechSynthesis.cancel(); idle(); return; }
+    const text=[NAME,$("tagline").textContent,$("story").textContent].filter(s=>s&&s.trim()).join('. ');
+    if(!text.trim()) return;
+    const u=new SpeechSynthesisUtterance(text); u.rate=.96; u.pitch=1; u.onend=idle; u.onerror=idle;
+    speechSynthesis.cancel(); speechSynthesis.speak(u); play();
+  });
+  addEventListener('beforeunload',()=>{ try{ speechSynthesis.cancel(); }catch(e){} });
+  host.appendChild(btn);
+}
+
+/* ================= One-tap shareable postcard (Canvas, keyless) =================
+   Built only from the REAL verified hero photo (or an honest ember gradient if
+   none) + the real tagline — never a faked image. */
+const PC_SANS='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+const slug=s=>String(s||'place').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'place';
+function loadCORS(src){ return new Promise((res,rej)=>{ const im=new Image(); im.crossOrigin='anonymous'; im.onload=()=>res(im); im.onerror=rej; im.src=src; }); }
+function wrapText(g,text,x,y,maxW,lh,maxLines){
+  const words=String(text).split(/\s+/); const lines=[]; let line='';
+  for(const w of words){ const t=line?line+' '+w:w;
+    if(g.measureText(t).width>maxW&&line){ lines.push(line); line=w; if(lines.length>=maxLines) break; } else line=t; }
+  if(lines.length<maxLines&&line) lines.push(line);
+  lines.slice(0,maxLines).forEach((l,i)=>g.fillText(l,x,y+i*lh));
+}
+async function makePostcard(btn){
+  const lbl=btn.querySelector('.lbl'), old=lbl.textContent;
+  lbl.textContent='Developing…'; btn.setAttribute('disabled','');
+  try{
+    const W=1200,H=800, c=document.createElement('canvas'); c.width=W; c.height=H;
+    const g=c.getContext('2d'); let drew=false;
+    if(HERO_SRC){ try{ const im=await loadCORS(HERO_SRC);
+      const s=Math.max(W/im.width,H/im.height), dw=im.width*s, dh=im.height*s;
+      g.drawImage(im,(W-dw)/2,(H-dh)/2,dw,dh); drew=true; }catch(e){ drew=false; } }
+    if(!drew){
+      const grad=g.createLinearGradient(0,0,W,H); grad.addColorStop(0,'#2a1c0f'); grad.addColorStop(1,'#0E0C0A');
+      g.fillStyle=grad; g.fillRect(0,0,W,H);
+      const rg=g.createRadialGradient(W*0.22,H*0.24,40,W*0.22,H*0.24,760);
+      rg.addColorStop(0,'rgba(255,122,41,.34)'); rg.addColorStop(1,'rgba(255,122,41,0)');
+      g.fillStyle=rg; g.fillRect(0,0,W,H);
+    }
+    const sc=g.createLinearGradient(0,H*0.32,0,H); sc.addColorStop(0,'rgba(14,12,10,0)'); sc.addColorStop(1,'rgba(14,12,10,.94)');
+    g.fillStyle=sc; g.fillRect(0,0,W,H);
+    g.strokeStyle='rgba(255,122,41,.85)'; g.lineWidth=6; g.strokeRect(26,26,W-52,H-52);
+    g.textBaseline='alphabetic';
+    g.fillStyle='#FFB25E'; g.font='700 24px ui-monospace,Menlo,Consolas,monospace';
+    g.fillText('ROUTEFORGE · A ROAD-TRIP STORYBOOK',60,H-262);
+    const name=(NAME||'').toUpperCase(); let fs=94; g.font='800 '+fs+'px '+PC_SANS;
+    while(g.measureText(name).width>W-120&&fs>42){ fs-=4; g.font='800 '+fs+'px '+PC_SANS; }
+    g.fillStyle='#EFE9DF'; g.fillText(name,60,H-166);
+    if(AREA){ g.fillStyle='#A89D8E'; g.font='600 30px '+PC_SANS; g.fillText(AREA,62,H-122); }
+    const tag=($("tagline").textContent||'').trim();
+    if(tag){ g.fillStyle='#EFE9DF'; g.font='500 31px '+PC_SANS; wrapText(g,tag,60,H-76,W-120,38,2); }
+    const blob=await new Promise(res=>c.toBlob(res,'image/png',.92)); if(!blob) throw new Error('noblob');
+    const file=new File([blob],slug(NAME)+'-routeforge.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file],title:NAME+' — RouteForge',text:tag||('A stop on my road trip: '+NAME)}); }catch(e){}
+    }else{
+      const url=URL.createObjectURL(blob), a=document.createElement('a');
+      a.href=url; a.download=file.name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),5000);
+    }
+  }catch(e){}
+  finally{ lbl.textContent=old; btn.removeAttribute('disabled'); }
+}
+function initPostcard(host){
+  const btn=document.createElement('button'); btn.className='act'; btn.type='button';
+  btn.innerHTML='<span class="ic">📮</span><span class="lbl">Make a postcard</span>';
+  btn.addEventListener('click',()=>makePostcard(btn)); host.appendChild(btn);
+}
+
+/* ================= Trip passport — collect this stop's stamp ================= */
+const PASS_LS="routeforge.passport.v1";
+function passRead(){ try{ const a=JSON.parse(localStorage.getItem(PASS_LS)||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function passWrite(a){ try{ localStorage.setItem(PASS_LS,JSON.stringify(a.slice(-500))); return true; }catch(e){ return false; } }
+function passK(n,a){ return (String(n||"").toLowerCase().trim()+"|"+String(a||"").toLowerCase().trim()); }
+function passHas(n,a){ const k=passK(n,a); return passRead().some(s=>passK(s.name,s.area)===k); }
+function burstConfetti(anchor){
+  const r=anchor.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+  const cols=['#FF7A29','#FFB25E','#EFE9DF','#E5583E'];
+  for(let i=0;i<28;i++){ const d=document.createElement('div'); d.className='confetti';
+    d.style.left=cx+'px'; d.style.top=cy+'px'; d.style.background=cols[i%cols.length];
+    const ang=Math.random()*Math.PI*2, dist=44+Math.random()*96;
+    d.style.setProperty('--dx',(Math.cos(ang)*dist).toFixed(1)+'px');
+    d.style.setProperty('--dy',(Math.sin(ang)*dist-46).toFixed(1)+'px');
+    d.style.setProperty('--r',(Math.random()*560-280).toFixed(0)+'deg');
+    document.body.appendChild(d); setTimeout(()=>d.remove(),1000);
+  }
+}
+function toast(msg){
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('in'));
+  setTimeout(()=>{ t.classList.remove('in'); setTimeout(()=>t.remove(),320); },2400);
+}
+function initPassportBtn(host){
+  const btn=document.createElement('button'); btn.className='act'; btn.type='button';
+  const paint=on=>{ btn.classList.toggle('stamped',on); btn.innerHTML='<span class="ic">'+(on?'🎖':'🧭')+'</span><span class="lbl">'+(on?'In your passport':'Collect this stamp')+'</span>'; };
+  paint(passHas(NAME,AREA));
+  btn.addEventListener('click',()=>{
+    if(passHas(NAME,AREA)){ location.href='/app.html#passport'; return; }
+    const a=passRead(); a.push({name:NAME,area:AREA,at:new Date().toISOString().slice(0,10)}); passWrite(a);
+    paint(true); burstConfetti(btn);
+    const n=passRead().length;
+    toast('🎖 Stamp collected — '+n+(n===1?' stop':' stops')+' in your passport');
+  });
+  host.appendChild(btn);
+}
+(function initActions(){ const host=$("actions"); if(!host) return; initPassportBtn(host); initNarration(host); initPostcard(host); })();
+
+function confDots(c){
+  const n=c==="high"?3:c==="medium"?2:1;
+  let h='<span class="conf" title="how sure we are this place exists as described">';
+  for(let i=0;i<3;i++) h+='<span class="dot '+(i<n?"f":"")+'"></span>';
+  return h+"</span>";
+}
+const PH={eat:"🍽",do:"🎟",stay:"🛏"};
+
+function pickCard(p,kind,i){
+  const where=[p.name,p.area||AREA].filter(Boolean).join(", ");
+  let links='<a class="pk-link" href="'+mapsSearch(where)+'" target="_blank" rel="noopener">map ↗</a>';
+  if(kind==="stay") links+='<a class="pk-link" href="'+hotelsUrl(p.name+" "+(p.area||AREA||""))+'" target="_blank" rel="noopener">rates ↗</a>';
+  if(kind==="eat") links+='<a class="pk-link" href="'+gSearch(p.name+" "+(p.area||AREA)+" menu")+'" target="_blank" rel="noopener">menu ↗</a>';
+  return '<div class="pk" style="animation-delay:'+(i*70)+'ms">'
+    +'<div class="pk-photo" data-pkphoto="'+esc(p.name+"|"+(p.area||AREA))+'" data-icon="'+PH[kind]+'"><div class="ph">'+PH[kind]+'<small>looking for a photo…</small></div></div>'
+    +'<div class="pk-body"><div class="pk-top"><span class="pk-name">'+esc(p.name)+'</span>'+confDots(p.confidence)+'</div>'
+    +(p.area?'<div class="pk-area">'+esc(p.area)+'</div>':"")
+    +(p.why?'<div class="pk-why">'+esc(p.why)+'</div>':"")
+    +'<div class="pk-links">'+links+'</div></div></div>';
+}
+
+function renderPicks(chId,listId,arr,kind){
+  if(!arr.length) return;
+  $(chId).classList.remove("hidden");
+  $(listId).innerHTML=arr.map((p,i)=>pickCard(p,kind,i)).join("");
+  arr.forEach((p,i)=>fillPickPhoto(p,i));
+}
+
+// Photo resolution, best → last, all verified / honestly-labeled, never LLM:
+//   1) Google Places (exact business photo) — only if /api/photo is keyed
+//   2) verified Wikipedia article photo of the exact venue
+//   3) verified Wikimedia Commons file of the exact venue
+//   4) real photo of the AREA/town, clearly tagged "NEARBY · <area>"
+//   5) a tappable "see real photos ↗" link to the venue's Google Maps photos
+async function fillPickPhoto(p,idx){
+  const area=p.area||AREA;
+  const host=document.querySelector('[data-pkphoto="'+CSS.escape(p.name+"|"+area)+'"]');
+  if(!host) return;
+  const icon=host.dataset.icon||"📷";
+  const see='<a class="ph phlink" href="'+esc(seePhotos(p.name,area))+'" target="_blank" rel="noopener">'+icon+'<small>see real photos ↗</small></a>';
+
+  let img=await placesImage(p.name,area);
+  if(!img){ const w=await wikiImages(p.name+" "+area,5,480,p.name,true); if(w[0]) img=w[0]; }
+  if(!img) img=await commonsImage(p.name,area);
+  let areaPhoto=false;
+  if(!img && area){
+    const a=await wikiImages(area,4,640,area,false);
+    if(a.length){ img=a[(idx||0)%a.length]; areaPhoto=true; }
+  }
+  if(!img){ host.innerHTML=see; return; }
+
+  const tag = areaPhoto ? '<span class="pk-areatag">NEARBY · '+esc(area)+'</span>' : '';
+  host.innerHTML='<img loading="lazy" alt="'+esc(p.name)+'" src="'+esc(img.src)+'">'+tag;
+  const el=host.querySelector("img");
+  el.onload=()=>el.classList.add("in");
+  el.onerror=()=>{ host.innerHTML=see; };
+}
+
+function renderWhispers(ws){
+  if(!ws.length) return;
+  $("chWhisper").classList.remove("hidden");
+  $("whisperList").innerHTML=ws.map((w,i)=>'<div class="wh" style="animation-delay:'+(i*70)+'ms"><q>'+esc(w.quote)+'</q><br>'
+    +(w.url?'<a class="src" href="'+esc(w.url)+'" target="_blank" rel="noopener">'+esc(w.source)+' ↗</a>':'<span class="src" style="border-style:dashed">'+esc(w.source)+'</span>')
+    +'</div>').join("");
+}
+
+/* ---------- the growing library ---------- */
+(async function loadLibrary(){
+  try{
+    const r=await fetch(SB_BASE+"/routeforge_places?select=name,area,tagline:data->>tagline&order=created_at.desc&limit=9",{headers:SB_HEADERS});
+    if(!r.ok) throw 0;
+    const rows=(await r.json()).filter(x=>norm(x.name)!==norm(NAME)).slice(0,8);
+    if(!rows.length){ $("chLib").classList.add("hidden"); return; }
+    $("lib").innerHTML=rows.map((x,i)=>{
+      const q=new URLSearchParams({name:x.name}); if(x.area) q.set("area",x.area); if(RV) q.set("vehicle","rv");
+      return '<a class="lib-card" href="/place.html?'+esc(q.toString())+'" style="animation-delay:'+(i*60)+'ms">'
+        +'<div class="lib-photo" data-libphoto="'+esc(x.name)+'"><div class="ph">📖</div></div>'
+        +'<div class="lib-body"><div class="lib-name">'+esc(x.name)+'</div>'
+        +(x.tagline?'<div class="lib-tag">'+esc(x.tagline)+'</div>':"")
+        +'<span class="lib-go">Open storybook →</span></div></a>';
+    }).join("");
+    rows.forEach(async x=>{
+      const shots=await wikiImages(x.name+" "+(x.area||""),4,400,x.name,false);
+      const host=document.querySelector('[data-libphoto="'+CSS.escape(x.name)+'"]');
+      if(!host||!shots.length) return;
+      host.innerHTML='<img loading="lazy" alt="'+esc(x.name)+'" src="'+esc(shots[0].src)+'">';
+      const img=host.querySelector("img"); img.onload=()=>img.classList.add("in");
+    });
+  }catch(e){ $("chLib").classList.add("hidden"); }
+})();
+</script>
+</body>
+</html>
