@@ -1,0 +1,68 @@
+{
+  ".claude/settings.json": {
+    "mtime": 1791928674.2427526,
+    "seen": 1791928685.0583508,
+    "ast_hash": "8a11bd3c471cdac14a4a288d79f86fc9",
+    "semantic_hash": ""
+  },
+  "ai/memory/mem.py": {
+    "mtime": 1791928674.2444868,
+    "seen": 1791928685.0583577,
+    "ast_hash": "f1adeb6954a832c8b6db344c7f8fd67a",
+    "semantic_hash": ""
+  },
+  ".github/workflows/graphify-refresh.yml": {
+    "mtime": 1791928674.2441568,
+    "seen": 1791928685.0583608,
+    "ast_hash": "b7464fc7fd063a2bab8d700e8bdfd9b4",
+    "semantic_hash": ""
+  },
+  ".grok/GROK.md": {
+    "mtime": 1791928674.2441568,
+    "seen": 1791928685.058363,
+    "ast_hash": "1b111196354e6be6ce61937738488acf",
+    "semantic_hash": ""
+  },
+  "AGENTS.md": {
+    "mtime": 1791928674.2441568,
+    "seen": 1791928685.0583644,
+    "ast_hash": "554557af9a428bf8f586262de1a66e08",
+    "semantic_hash": ""
+  },
+  "CLAUDE.md": {
+    "mtime": 1791928674.2441568,
+    "seen": 1791928685.0583656,
+    "ast_hash": "eeb98878461aec6a6a3ce7258464deb0",
+    "semantic_hash": ""
+  },
+  "ai/DECISIONS.md": {
+    "mtime": 1791928674.2441568,
+    "seen": 1791928685.058367,
+    "ast_hash": "694509db87182728b18c7fd8c3dca1d2",
+    "semantic_hash": ""
+  },
+  "ai/NOW.md": {
+    "mtime": 1791928674.2444868,
+    "seen": 1791928685.0583684,
+    "ast_hash": "16b1dc0831cffef552260c22049ac057",
+    "semantic_hash": ""
+  },
+  "app.html": {
+    "mtime": 1791928674.2444868,
+    "seen": 1791928685.0583699,
+    "ast_hash": "afd03aa68e9a53ec8883270d17c950b5",
+    "semantic_hash": ""
+  },
+  "index.html": {
+    "mtime": 1791928674.2444868,
+    "seen": 1791928685.058371,
+    "ast_hash": "7d8fdbbc24f87ff485a4ef577fd71937",
+    "semantic_hash": ""
+  },
+  "signup.html": {
+    "mtime": 1791928674.2444868,
+    "seen": 1791928685.058372,
+    "ast_hash": "9f8fe25c87e14914e8c3e59cdf105b37",
+    "semantic_hash": ""
+  }
+}
